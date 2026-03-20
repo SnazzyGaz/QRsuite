@@ -1,1 +1,9 @@
 
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.snazzygaz.twa",
+        "sha256_cert_fingerprints": ["D4:91:A3:11:38:28:CD:7D:B6:81:89:9C:88:7E:6F:2C:07:C6:9C:44:E0:0E:25:29:E4:70:3F:C4:40:67:E2:B5"]
+      }
+    }]
