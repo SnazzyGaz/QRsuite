@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "io.github.snazzygaz.qrsuite",
-        "sha256_cert_fingerprints": ["43:2B:1F:42:4C:90:64:BB:1E:49:18:A0:B0:A7:6F:62:06:67:62:9F:0A:B3:AC:41:BA:9C:62:57:40:56:97:7B"]
+        "sha256_cert_fingerprints": ["CA:1D:40:33:79:05:DE:ED:97:6C:14:05:7B:3F:7E:4B:19:82:F2:AC:A5:CF:39:54:5F:CA:0E:89:24:BF:0C:96"]
       }
     }]
