@@ -2264,69 +2264,8 @@ function penisMode() {
 //# sourceMappingURL=/sm/261261d91f249d4079ae119cfa50f739467d90fc365078a671172e0f499e862a.map
 </script>
 
+
 <script>
-// ── PWA: Inline manifest via blob URL ─────────────────────────────────────────
-(function() {
-  const manifest = {
-    name: "QR Suite",
-    short_name: "QR Suite",
-    description: "Generate and scan QR codes — works offline",
-    start_url: ".",
-    display: "standalone",
-    orientation: "portrait",
-    background_color: "#1a1f32",
-    theme_color: "#1a1f32",
-    icons: [
-      {
-        src: "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-          <rect width="192" height="192" rx="42" fill="#2a1f3d"/>
-          <rect x="24" y="24" width="164" height="164" rx="36" fill="none" stroke="#c9b8f0" stroke-width="0.5" opacity="0.18"/>
-          <rect x="28" y="28" width="50" height="50" rx="6" fill="#9d83d6"/>
-          <rect x="34" y="34" width="38" height="38" rx="4" fill="#2a1f3d"/>
-          <rect x="40" y="40" width="26" height="26" rx="3" fill="#c9b8f0"/>
-          <rect x="114" y="28" width="50" height="50" rx="6" fill="#9d83d6"/>
-          <rect x="120" y="34" width="38" height="38" rx="4" fill="#2a1f3d"/>
-          <rect x="126" y="40" width="26" height="26" rx="3" fill="#c9b8f0"/>
-          <rect x="28" y="114" width="50" height="50" rx="6" fill="#9d83d6"/>
-          <rect x="34" y="120" width="38" height="38" rx="4" fill="#2a1f3d"/>
-          <rect x="40" y="126" width="26" height="26" rx="3" fill="#c9b8f0"/>
-          <rect x="86" y="28" width="12" height="12" rx="2" fill="#9d83d6"/>
-          <rect x="86" y="46" width="12" height="12" rx="2" fill="#e8deff"/>
-          <rect x="86" y="64" width="12" height="12" rx="2" fill="#c9b8f0"/>
-          <rect x="28" y="86" width="12" height="12" rx="2" fill="#e8deff"/>
-          <rect x="46" y="86" width="12" height="12" rx="2" fill="#c9b8f0"/>
-          <rect x="64" y="86" width="12" height="12" rx="2" fill="#9d83d6"/>
-          <rect x="86" y="86" width="12" height="12" rx="2" fill="#c9b8f0"/>
-          <rect x="104" y="86" width="8" height="12" rx="2" fill="#9d83d6"/>
-          <rect x="86" y="100" width="26" height="8" rx="2" fill="#e8deff"/>
-          <rect x="114" y="114" width="12" height="12" rx="2" fill="#c9b8f0"/>
-          <rect x="130" y="114" width="12" height="12" rx="2" fill="#e8deff"/>
-          <rect x="148" y="114" width="18" height="12" rx="2" fill="#9d83d6"/>
-          <rect x="114" y="130" width="20" height="12" rx="2" fill="#e8deff"/>
-          <rect x="140" y="130" width="12" height="12" rx="2" fill="#c9b8f0"/>
-          <rect x="158" y="130" width="8" height="12" rx="2" fill="#9d83d6"/>
-          <rect x="114" y="148" width="12" height="12" rx="2" fill="#9d83d6"/>
-          <rect x="130" y="148" width="28" height="12" rx="2" fill="#c9b8f0"/>
-          <rect x="164" y="148" width="4" height="12" rx="2" fill="#e8deff"/>
-          <rect x="114" y="164" width="54" height="4" rx="2" fill="#e8deff" opacity="0.7"/>
-        </svg>`),
-        sizes: "192x192",
-        type: "image/svg+xml",
-        purpose: "any maskable"
-      }
-    ]
-  };
-
-  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-  const manifestUrl = URL.createObjectURL(blob);
-  const link = document.createElement('link');
-  link.rel = 'manifest';
-  link.href = manifestUrl;
-  // Remove the static manifest link if present, replace with blob version
-  document.querySelectorAll('link[rel="manifest"]').forEach(l => l.remove());
-  document.head.appendChild(link);
-})();
-
 // ── PWA: Service Worker (inline via blob) ─────────────────────────────────────
 if ('serviceWorker' in navigator) {
   const swCode = `
