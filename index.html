@@ -2267,6 +2267,13 @@ function penisMode() {
 
 <script>
 // ── PWA: Service Worker (inline via blob) ─────────────────────────────────────
+// ── PWA: Register real sw.js (also keeps blob SW as fallback) ────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js', { scope: '/' })
+    .then(reg => console.log('[PWA] sw.js registered:', reg.scope))
+    .catch(() => {}); // falls through to blob SW below
+}
+
 if ('serviceWorker' in navigator) {
   const swCode = `
 const CACHE = 'qrsuite-v1';
