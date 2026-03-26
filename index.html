@@ -515,6 +515,26 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
 
 /* Dropdown option text — hardcoded in base styles */
 
+
+/* ── Update button ── */
+#update-btn {
+  position: fixed; bottom: calc(10px + env(safe-area-inset-bottom));
+  right: 14px; z-index: 50;
+  background: none; border: none;
+  font-size: 11px; font-family: var(--font-mono);
+  color: var(--text3); opacity: 0.35;
+  cursor: pointer; padding: 6px;
+  border-radius: 8px;
+  transition: opacity 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+#update-btn:active { opacity: 0.9; }
+#update-btn.checking { opacity: 0.7; animation: updateSpin 1s linear infinite; }
+#update-btn.up-to-date { opacity: 0.6; color: var(--success); }
+#update-btn.has-update { opacity: 1; color: #e07070; animation: updatePulse 1.5s ease-in-out infinite; }
+@keyframes updateSpin { to { transform: rotate(360deg); } }
+@keyframes updatePulse { 0%,100% { opacity:0.7; } 50% { opacity:1; } }
+
 </style>
 </head>
 <body>
@@ -795,6 +815,7 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
 </div><!-- /app -->
 
 <div id="watermark" onclick="penisMode()">8==D &nbsp;by garyck</div>
+<button id="update-btn" onclick="checkForUpdate()" title="Check for update">⟳</button>
 <div id="penis-overlay" style="display:none;position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden"></div>
 
 <script>
@@ -2538,6 +2559,41 @@ function closeHistSheet() {
     }
   }, { passive: true });
 })();
+
+
+// ── Update checker ────────────────────────────────────────────────────────
+async function checkForUpdate() {
+  var btn = document.getElementById('update-btn');
+  btn.classList.remove('up-to-date', 'has-update');
+  btn.classList.add('checking');
+  btn.title = 'Checking…';
+  try {
+    var res = await fetch(location.href + '?nocache=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('fetch failed');
+    var remote = await res.text();
+    var current = document.documentElement.outerHTML;
+    // Compare a meaningful chunk rather than full HTML (timestamps etc may differ)
+    var remoteHash = remote.length + '_' + remote.slice(500, 1500).replace(/\s+/g, '');
+    var currentHash = current.length + '_' + current.slice(500, 1500).replace(/\s+/g, '');
+    btn.classList.remove('checking');
+    if (remoteHash !== currentHash) {
+      btn.classList.add('has-update');
+      btn.title = 'Update available — tap to reload';
+      btn.onclick = function() { location.reload(true); };
+    } else {
+      btn.classList.add('up-to-date');
+      btn.title = 'Up to date ✓';
+      setTimeout(function() {
+        btn.classList.remove('up-to-date');
+        btn.title = 'Check for update';
+        btn.onclick = checkForUpdate;
+      }, 3000);
+    }
+  } catch(e) {
+    btn.classList.remove('checking');
+    btn.title = 'Could not check — tap to retry';
+  }
+}
 
 </script>
 
