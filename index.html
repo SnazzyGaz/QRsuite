@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#1a1f32">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons-192.png">
+<link rel="apple-touch-icon" href="iconss-192.png">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2257,6 +2257,47 @@ function closeHistSheet() {
   document.getElementById('hist-sheet-backdrop').classList.remove('open');
   document.body.style.overflow = '';
 }
+
+
+// ── Swipe to change tabs ───────────────────────────────────────────────────
+(function() {
+  var tabs = ['generate', 'scan', 'saved'];
+  var card = document.querySelector('.card');
+  var touchStartX = 0;
+  var touchStartY = 0;
+  var touchStartTime = 0;
+
+  card.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchStartTime = Date.now();
+  }, { passive: true });
+
+  card.addEventListener('touchend', function(e) {
+    var dx = e.changedTouches[0].clientX - touchStartX;
+    var dy = e.changedTouches[0].clientY - touchStartY;
+    var dt = Date.now() - touchStartTime;
+
+    // Must be fast enough, horizontal enough, and long enough
+    if (dt > 400) return;
+    if (Math.abs(dx) < 40) return;
+    if (Math.abs(dy) > Math.abs(dx) * 0.8) return; // too vertical
+
+    // Find current tab
+    var current = tabs.findIndex(function(t) {
+      return document.getElementById('tab-' + t).classList.contains('active');
+    });
+    if (current === -1) return;
+
+    // Don't swipe if action sheet is open
+    if (document.getElementById('hist-action-sheet') &&
+        document.getElementById('hist-action-sheet').style.display !== 'none') return;
+
+    var next = dx < 0 ? current + 1 : current - 1;
+    if (next < 0 || next >= tabs.length) return;
+    switchTab(tabs[next]);
+  }, { passive: true });
+})();
 
 </script>
 
