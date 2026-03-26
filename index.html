@@ -2469,6 +2469,8 @@ function closeHistSheet() {
     currentIdx = getCurrentIdx();
   }, { passive: true });
 
+  var COMMIT_THRESHOLD = 42; // px — crossing this means it WILL switch regardless of speed
+
   document.addEventListener('touchmove', function(e) {
     if (!dragging) return;
     var dx = e.touches[0].clientX - touchStartX;
@@ -2486,28 +2488,62 @@ function closeHistSheet() {
     if (dx < 0 && currentIdx === TABS.length - 1) return;
 
     positionIndicator(currentIdx, dx);
+
+    // Show committed state: once past threshold, snap indicator fully to dest
+    var bar = document.getElementById('tabs-bar');
+    var tabW = bar ? bar.offsetWidth / TABS.length : 0;
+    var destIdx = dx < 0 ? currentIdx + 1 : currentIdx - 1;
+    destIdx = Math.max(0, Math.min(TABS.length - 1, destIdx));
+    var committed = Math.abs(dx) >= COMMIT_THRESHOLD;
+    var ind = document.getElementById('tab-indicator');
+    if (ind) {
+      ind.style.opacity = committed ? '1' : '0.6';
+      ind.style.height = committed ? '3px' : '2px';
+    }
+    // Highlight destination tab label fully when committed
+    var tabEls = bar ? bar.querySelectorAll('.tab') : [];
+    tabEls.forEach(function(el, i) {
+      el.style.transition = 'none';
+      if (committed && i === destIdx) {
+        el.style.opacity = '1';
+        el.style.color = 'var(--text)';
+      } else if (!committed && i === destIdx) {
+        el.style.opacity = String(0.4 + (Math.abs(dx) / COMMIT_THRESHOLD) * 0.6);
+      } else if (i === currentIdx) {
+        el.style.opacity = committed ? '0.4' : String(1 - (Math.abs(dx) / COMMIT_THRESHOLD) * 0.5);
+      } else {
+        el.style.opacity = '0.4';
+      }
+    });
   }, { passive: true });
 
   document.addEventListener('touchend', function(e) {
     if (!dragging || !isHorizontal) { dragging = false; return; }
     dragging = false;
     var dx = e.changedTouches[0].clientX - touchStartX;
-    var dy = e.changedTouches[0].clientY - touchStartY;
     var dt = Date.now() - touchStartTime;
 
+    // Reset indicator styling
+    var ind = document.getElementById('tab-indicator');
+    if (ind) { ind.style.opacity = '1'; ind.style.height = '2px'; }
     resetTabOpacity();
 
-    if (dt > 500 || Math.abs(dx) < 35) {
-      positionIndicator(currentIdx); // snap back
-      return;
-    }
-
+    var absDx = Math.abs(dx);
     var next = dx < 0 ? currentIdx + 1 : currentIdx - 1;
     if (next < 0 || next >= TABS.length) {
       positionIndicator(currentIdx);
       return;
     }
-    window.switchTab(TABS[next]);
+
+    // Commit if: past threshold (any speed), OR fast flick (short distance ok)
+    var pastThreshold = absDx >= COMMIT_THRESHOLD;
+    var fastFlick = dt < 300 && absDx >= 20;
+
+    if (pastThreshold || fastFlick) {
+      window.switchTab(TABS[next]);
+    } else {
+      positionIndicator(currentIdx); // snap back
+    }
   }, { passive: true });
 })();
 
