@@ -2414,8 +2414,9 @@ function closeHistSheet() {
     // pct = 0 (no movement) → 1 (full tab width dragged)
     var clampedOff = Math.max(-tabW, Math.min(tabW, offset));
     var pct = Math.abs(clampedOff) / tabW; // 0..1
-    var dir = clampedOff < 0 ? 1 : -1; // swipe left = next tab (right), swipe right = prev tab (left)
-    var destIdx = idx - dir; // destination tab index
+    // swipe left (negative dx) → destination is next tab (idx+1, to the right)
+    // swipe right (positive dx) → destination is prev tab (idx-1, to the left)
+    var destIdx = clampedOff < 0 ? idx + 1 : idx - 1;
     destIdx = Math.max(0, Math.min(TABS.length - 1, destIdx));
 
     // Interpolate indicator position from current to destination
