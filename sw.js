@@ -1,5 +1,5 @@
 // QR Suite — Service Worker
-const CACHE = 'qrsuite-v2';
+const CACHE = 'qrsuite-v3';
 const ASSETS = [
   '/',
   '/index.html',
