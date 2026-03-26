@@ -217,6 +217,8 @@ body {
 
 .lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--text3); text-transform: uppercase; margin-bottom: 7px; }
 .inp { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; color: var(--text); font-family: var(--font-ui); font-size: 16px; outline: none; -webkit-appearance: none; }
+#qr-input::-webkit-search-cancel-button { display: none; }
+#qr-input::-webkit-search-decoration { display: none; }
 .inp::placeholder { color: var(--text3); }
 .inp:focus { border-color: var(--accent); }
 
@@ -578,7 +580,7 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
           <div class="main">
             <div>
               <div class="lbl">Content</div>
-              <input class="inp" id="qr-input" type="text" placeholder="https://example.com or any text…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore />
+              <input class="inp" id="qr-input" type="search" placeholder="https://example.com or any text…" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore readonly onfocus="this.removeAttribute('readonly')" />
             </div>
             <div>
               <button class="settings-toggle" id="settings-toggle" onclick="toggleSettings()">
