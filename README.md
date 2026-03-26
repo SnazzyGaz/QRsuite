@@ -4,8 +4,6 @@ A beautiful, fully offline Progressive Web App for generating, scanning, and man
 
 Create stylish QR codes with custom colors, error correction, and artistic options — or scan any QR code using your camera or uploaded image. Everything works offline once installed.
 
-![QR Suite Preview](https://raw.githubusercontent.com/SnazzyGaz/QRsuite/main/hm.png)
-
 ## ✨ Features
 
 - **Generate QR Codes** — Enter text, URLs, or any data
@@ -19,8 +17,6 @@ Create stylish QR codes with custom colors, error correction, and artistic optio
 - **Save & Manage** — Keep a history of generated and scanned codes
 - **Fully Offline** — Installable PWA that works without internet
 - **Mobile-First** — Excellent experience on phones, tablets, and desktop
-
-![Second Preview](https://raw.githubusercontent.com/SnazzyGaz/QRsuite/main/hm2.png)
 
 ## 🚀 Try It Live
 
