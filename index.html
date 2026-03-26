@@ -119,17 +119,20 @@ body {
 }
 [data-theme="terminal"] #matrix-canvas { display: block; }
 [data-theme="terminal"] .app,
-[data-theme="terminal"] .titlebar,
 [data-theme="terminal"] #watermark { position: relative; z-index: 1; }
+[data-theme="terminal"] .titlebar { position: sticky; z-index: 101; }
+[data-theme="terminal"] .theme-dropdown { z-index: 300; }
+[data-theme="terminal"] .theme-dropdown-backdrop { z-index: 299; }
 
 .titlebar {
   background: var(--bg3);
   border-bottom: 1px solid var(--border);
-  padding: 0 12px 0 14px;
+  padding: 0 14px;
   height: 54px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 10px;
   flex-shrink: 0;
   user-select: none;
   position: sticky;
@@ -138,12 +141,60 @@ body {
 }
 .px-star { display: grid; grid-template-columns: repeat(9, 4px); grid-template-rows: repeat(5, 4px); gap: 2px; flex-shrink: 0; }
 .px-star span { border-radius: 1px; }
-.titlebar-name { font-family: var(--font-mono); font-size: 11px; color: var(--text3); letter-spacing: 0.06em; flex: 1; text-align: center; }
-.theme-swatches { display: flex; gap: 4px; align-items: center; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; max-width: 200px; }
-.theme-swatches::-webkit-scrollbar { display: none; }
-.theme-swatch { width: 26px; height: 26px; border-radius: 8px; border: 2px solid transparent; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: border-color 0.15s, transform 0.1s; user-select: none; -webkit-tap-highlight-color: transparent; }
-.theme-swatch:active { transform: scale(0.88); }
-.theme-swatch.active { border-color: var(--text2); }
+.titlebar-name {
+  font-family: var(--font-ui);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.04em;
+  text-align: center;
+  flex: 1;
+}
+
+/* Theme picker button + dropdown */
+.theme-btn {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 6px 10px;
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer; flex-shrink: 0;
+  font-size: 18px; line-height: 1;
+  transition: background 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.theme-btn:active { background: var(--accent-bg); border-color: var(--accent); }
+.theme-btn-arrow { font-size: 9px; color: var(--text3); transition: transform 0.2s; font-family: var(--font-mono); }
+.theme-btn.open .theme-btn-arrow { transform: rotate(180deg); }
+
+.theme-dropdown {
+  display: none; position: absolute;
+  top: calc(100% + 8px); right: 0;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 14px; padding: 8px;
+  min-width: 180px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  z-index: 200;
+  animation: dropIn 0.18s cubic-bezier(0.4,0,0.2,1);
+}
+.theme-dropdown.open { display: block; }
+@keyframes dropIn {
+  from { opacity:0; transform: translateY(-8px) scale(0.96); }
+  to   { opacity:1; transform: translateY(0) scale(1); }
+}
+.theme-opt {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 9px;
+  cursor: pointer; transition: background 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.theme-opt:active, .theme-opt:hover { background: var(--bg3); }
+.theme-opt.active { background: var(--accent-bg); }
+.theme-opt-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
+.theme-opt-name { font-size: 13px; color: var(--text); font-family: var(--font-ui); flex: 1; }
+.theme-opt-check { font-size: 12px; color: var(--accent); opacity: 0; }
+.theme-opt.active .theme-opt-check { opacity: 1; }
+.theme-dropdown-backdrop { display: none; position: fixed; inset: 0; z-index: 199; }
+.theme-dropdown-backdrop.open { display: block; }
 
 .app { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 12px calc(14px + var(--safe-bottom)); }
 
@@ -432,6 +483,42 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
 .hist-sheet-btn-sub { font-size: 11px; opacity: 0.65; font-family: var(--font-mono); margin-top: 1px; }
 .hist-sheet-divider { height: 1px; background: var(--border); margin: 4px 14px; }
 
+
+/* ── Smart titlebar contrast per theme ── */
+/* Dark themes: title bright, button subdued */
+.titlebar-name { color: var(--text); }
+
+/* Light themes: deepen the title and button for crispness */
+[data-theme="light"] .titlebar-name,
+[data-theme="fog"] .titlebar-name,
+[data-theme="ocean"] .titlebar-name {
+  color: #111111;
+}
+[data-theme="sprout"] .titlebar-name { color: #0e2a0e; }
+[data-theme="sunset"] .titlebar-name,
+[data-theme="peach"] .titlebar-name  { color: #2a0e04; }
+[data-theme="candy"] .titlebar-name  { color: #3a1030; }
+
+/* Light themes: give theme button more visible border */
+[data-theme="light"] .theme-btn,
+[data-theme="fog"] .theme-btn,
+[data-theme="ocean"] .theme-btn,
+[data-theme="sprout"] .theme-btn,
+[data-theme="sunset"] .theme-btn,
+[data-theme="peach"] .theme-btn,
+[data-theme="candy"] .theme-btn {
+  border-color: var(--border2);
+  background: rgba(255,255,255,0.7);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* Terminal: green title */
+[data-theme="terminal"] .titlebar-name { color: #22aa44; letter-spacing: 0.12em; }
+
+/* Dropdown option text always uses full --text for max contrast */
+.theme-opt-name { color: var(--text) !important; }
+.theme-opt-check { color: var(--accent) !important; }
+
 </style>
 </head>
 <body>
@@ -450,19 +537,25 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
 <div class="titlebar">
   <div class="px-star" id="star-left"></div>
   <span class="titlebar-name">QR Suite</span>
-  <div class="theme-swatches" id="theme-swatches">
-    <div class="theme-swatch" data-theme="light" title="Midday">☀️</div>
-    <div class="theme-swatch" data-theme="sunset" title="Sunset">🌅</div>
-    <div class="theme-swatch active" data-theme="twilight" title="Twilight">💜</div>
-    <div class="theme-swatch" data-theme="midnight" title="Midnight">🌙</div>
-    <div class="theme-swatch" data-theme="sprout" title="Spring">🌱</div>
-    <div class="theme-swatch" data-theme="candy" title="Candy">🌸</div>
-    <div class="theme-swatch" data-theme="ocean" title="Ocean">🌊</div>
-    <div class="theme-swatch" data-theme="peach" title="Peach">🍑</div>
-    <div class="theme-swatch" data-theme="fog" title="Wind">🌫️</div>
-    <div class="theme-swatch" data-theme="terminal" title="Matrix">💻</div>
+  <div style="position:relative;flex-shrink:0">
+    <div class="theme-dropdown-backdrop" id="theme-backdrop" onclick="closeThemeDropdown()"></div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleThemeDropdown()">
+      <span id="theme-btn-icon">💜</span>
+      <span class="theme-btn-arrow">▾</span>
+    </button>
+    <div class="theme-dropdown" id="theme-dropdown">
+      <div class="theme-opt" data-theme="light"     onclick="pickTheme('light')">    <span class="theme-opt-icon">☀️</span> <span class="theme-opt-name">Midday</span>   <span class="theme-opt-check">✓</span></div>
+      <div class="theme-opt" data-theme="sunset"    onclick="pickTheme('sunset')">   <span class="theme-opt-icon">🌅</span> <span class="theme-opt-name">Sunset</span>   <span class="theme-opt-check">✓</span></div>
+      <div class="theme-opt active" data-theme="twilight"  onclick="pickTheme('twilight')"> <span class="theme-opt-icon">💜</span> <span class="theme-opt-name">Twilight</span> <span class="theme-opt-check">✓</span></div>
+      <div class="theme-opt" data-theme="midnight"  onclick="pickTheme('midnight')"> <span class="theme-opt-icon">🌙</span> <span class="theme-opt-name">Midnight</span> <span class="theme-opt-check">✓</span></div>
+      <div class="theme-opt" data-theme="sprout"    onclick="pickTheme('sprout')">   <span class="theme-opt-icon">🌱</span> <span class="theme-opt-name">Spring</span>   <span class="theme-opt-check">✓</span></div>
+      <div class="theme-opt" data-theme="candy"     onclick="pickTheme('candy')">    <span class="theme-opt-icon">🌸</span> <span class="theme-opt-name">Candy</span>    <span class="theme-opt-check">✓</span></div>
+      <div class="theme-opt" data-theme="ocean"     onclick="pickTheme('ocean')">    <span class="theme-opt-icon">🌊</span> <span class="theme-opt-name">Ocean</span>    <span class="theme-opt-check">✓</span></div>
+      <div class="theme-opt" data-theme="peach"     onclick="pickTheme('peach')">    <span class="theme-opt-icon">🍑</span> <span class="theme-opt-name">Peach</span>    <span class="theme-opt-check">✓</span></div>
+      <div class="theme-opt" data-theme="fog"       onclick="pickTheme('fog')">      <span class="theme-opt-icon">🌫️</span> <span class="theme-opt-name">Fog</span>      <span class="theme-opt-check">✓</span></div>
+      <div class="theme-opt" data-theme="terminal"  onclick="pickTheme('terminal')"> <span class="theme-opt-icon">💻</span> <span class="theme-opt-name">Matrix</span>   <span class="theme-opt-check">✓</span></div>
+    </div>
   </div>
-  <div class="px-star" id="star-right"></div>
 </div>
 
 <div class="app">
@@ -1098,18 +1191,41 @@ var camDecodeCtx = camDecodeCanvas.getContext('2d');
 // ─────────────────────────────────────────────
 // Theme
 // ─────────────────────────────────────────────
+var THEME_ICONS = {
+  light:'☀️', sunset:'🌅', twilight:'💜', midnight:'🌙',
+  sprout:'🌱', candy:'🌸', ocean:'🌊', peach:'🍑', fog:'🌫️', terminal:'💻'
+};
 function applyTheme(t) {
   currentTheme = t;
   document.documentElement.setAttribute('data-theme', t);
   localStorage.setItem('qr-theme', t);
-  document.querySelectorAll('.theme-swatch').forEach(s => {
+  // Update dropdown active states
+  document.querySelectorAll('.theme-opt').forEach(function(s) {
     s.classList.toggle('active', s.dataset.theme === t);
   });
+  // Update button icon
+  var btnIcon = document.getElementById('theme-btn-icon');
+  if (btnIcon) btnIcon.textContent = THEME_ICONS[t] || '🎨';
   if (t === 'terminal') startMatrix(); else stopMatrix();
 }
-document.querySelectorAll('.theme-swatch').forEach(s => {
-  s.addEventListener('click', () => applyTheme(s.dataset.theme));
-});
+function toggleThemeDropdown() {
+  var dd = document.getElementById('theme-dropdown');
+  var btn = document.getElementById('theme-btn');
+  var backdrop = document.getElementById('theme-backdrop');
+  var isOpen = dd.classList.contains('open');
+  dd.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  backdrop.classList.toggle('open', !isOpen);
+}
+function closeThemeDropdown() {
+  document.getElementById('theme-dropdown').classList.remove('open');
+  document.getElementById('theme-btn').classList.remove('open');
+  document.getElementById('theme-backdrop').classList.remove('open');
+}
+function pickTheme(t) {
+  applyTheme(t);
+  closeThemeDropdown();
+}
 applyTheme(currentTheme);
 
 // ─────────────────────────────────────────────
@@ -1124,6 +1240,7 @@ applyTheme(currentTheme);
   var flat = [[0,0,1,0,0,0,1,0,0],[0,1,1,1,0,1,1,1,0],[1,1,0,1,1,1,0,1,1],[0,1,1,1,0,1,1,1,0],[0,0,1,0,0,0,1,0,0]];
   ['star-left','star-right'].forEach(id => {
     var el = document.getElementById(id);
+    if (!el) return;
     for(var r=0;r<5;r++) for(var c=0;c<9;c++) {
       var span = document.createElement('span');
       span.style.background = flat[r][c] ? 'var(--accent)' : 'transparent';
@@ -2281,25 +2398,41 @@ function closeHistSheet() {
     if (!bar || !ind) return;
     var tabEls = bar.querySelectorAll('.tab');
     var tabW = bar.offsetWidth / TABS.length;
-    // Base position for the current tab
-    var baseLeft = idx * tabW;
-    // Clamp offset so it doesn't drag past adjacent tabs
-    var maxOff = tabW;
-    var clampedOff = Math.max(-maxOff, Math.min(maxOff, offset || 0));
-    ind.style.transition = offset === undefined ? 'left 0.25s cubic-bezier(0.4,0,0.2,1), width 0.25s' : 'none';
-    ind.style.left = (baseLeft + clampedOff * 0.4) + 'px';
+
     ind.style.width = tabW + 'px';
-    // Shift tab label colours proportionally
+
+    if (offset === undefined) {
+      // Snapping to a tab — use CSS transition
+      ind.style.transition = 'left 0.25s cubic-bezier(0.4,0,0.2,1)';
+      ind.style.left = (idx * tabW) + 'px';
+      return;
+    }
+
+    // During drag: indicator moves from current tab TOWARD destination
+    // pct = 0 (no movement) → 1 (full tab width dragged)
+    var clampedOff = Math.max(-tabW, Math.min(tabW, offset));
     var pct = Math.abs(clampedOff) / tabW; // 0..1
+    var dir = clampedOff < 0 ? 1 : -1; // swipe left = next tab (right), swipe right = prev tab (left)
+    var destIdx = idx - dir; // destination tab index
+    destIdx = Math.max(0, Math.min(TABS.length - 1, destIdx));
+
+    // Interpolate indicator position from current to destination
+    var fromLeft = idx * tabW;
+    var toLeft = destIdx * tabW;
+    var indicatorLeft = fromLeft + (toLeft - fromLeft) * pct;
+
+    ind.style.transition = 'none';
+    ind.style.left = indicatorLeft + 'px';
+
+    // Fade tab labels: current fades out, destination fades in
     tabEls.forEach(function(el, i) {
+      el.style.transition = 'none';
       if (i === idx) {
-        el.style.color = '';
-      } else if ((offset < 0 && i === idx + 1) || (offset > 0 && i === idx - 1)) {
-        el.style.color = '';
+        el.style.opacity = 1 - pct * 0.5;
+      } else if (i === destIdx) {
         el.style.opacity = 0.4 + pct * 0.6;
       } else {
-        el.style.color = '';
-        el.style.opacity = '';
+        el.style.opacity = '0.4';
       }
     });
   }
