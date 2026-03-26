@@ -41,10 +41,10 @@
   --success:#4a9e7a;--success-bg:#1a3a2a;
 }
 [data-theme="light"] {
-  --bg:#f8f8f6;--bg2:#ffffff;--bg3:#f0f0ee;--bg4:#eeeeec;
-  --border:#ddddd8;--border2:#c8c8c4;
-  --text:#1a1a18;--text2:#3a3a38;--text3:#9a9a95;
-  --accent:#4a4a48;--accent-bg:#e8e8e4;--accent-fg:#f8f8f6;
+  --bg:#f4f5f7;--bg2:#ffffff;--bg3:#eceef2;--bg4:#e8eaee;
+  --border:#d8dce6;--border2:#c0c8d8;
+  --text:#1e2a38;--text2:#3a4a5a;--text3:#7a8a9a;
+  --accent:#4a5a72;--accent-bg:#e0e4ee;--accent-fg:#0e1a28;
   --success:#2a8a5a;--success-bg:#e4f4ec;
 }
 [data-theme="sprout"] {
@@ -86,18 +86,11 @@
   --accent:#3a9abf;--accent-bg:#d8eef8;--accent-fg:#0a3a50;
   --success:#2a8a5a;--success-bg:#e0f4ec;
 }
-[data-theme="peach"] {
-  --bg:#fff8f4;--bg2:#ffffff;--bg3:#fef0e8;--bg4:#fdeee4;
-  --border:#f5d8c4;--border2:#e0b898;
-  --text:#4a2010;--text2:#804030;--text3:#a06040;
-  --accent:#d4784a;--accent-bg:#fce4d0;--accent-fg:#3a1008;
-  --success:#2a8a5a;--success-bg:#e8f8ee;
-}
 [data-theme="fog"] {
-  --bg:#f4f5f7;--bg2:#ffffff;--bg3:#eceef2;--bg4:#e8eaee;
-  --border:#d8dce6;--border2:#c0c8d8;
-  --text:#1e2a38;--text2:#3a4a5a;--text3:#7a8a9a;
-  --accent:#4a5a72;--accent-bg:#e0e4ee;--accent-fg:#0e1a28;
+  --bg:#f8f8f6;--bg2:#ffffff;--bg3:#f0f0ee;--bg4:#eeeeec;
+  --border:#ddddd8;--border2:#c8c8c4;
+  --text:#1a1a18;--text2:#3a3a38;--text3:#9a9a95;
+  --accent:#4a4a48;--accent-bg:#e8e8e4;--accent-fg:#f8f8f6;
   --success:#2a8a5a;--success-bg:#e4f4ec;
 }
 
@@ -210,7 +203,7 @@ body {
 .tab:active { opacity: 0.7; }
 .tab.active { color: var(--text); }
 .tab-indicator { position: absolute; bottom: -1px; height: 2px; background: var(--accent); border-radius: 2px 2px 0 0; transition: left 0.25s cubic-bezier(0.4,0,0.2,1), width 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.2s; pointer-events: none; z-index: 2; }
-[data-theme="light"] .tab.active,[data-theme="sunset"] .tab.active,[data-theme="sprout"] .tab.active,[data-theme="ocean"] .tab.active,[data-theme="peach"] .tab.active,[data-theme="fog"] .tab.active,[data-theme="candy"] .tab.active { color: var(--text); }
+[data-theme="light"] .tab.active,[data-theme="sunset"] .tab.active,[data-theme="sprout"] .tab.active,[data-theme="ocean"] .tab.active,[data-theme="fog"] .tab.active,[data-theme="candy"] .tab.active { color: var(--text); }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
@@ -502,8 +495,7 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
   color: #111111;
 }
 [data-theme="sprout"] .titlebar-name { color: #0e2a0e; }
-[data-theme="sunset"] .titlebar-name,
-[data-theme="peach"] .titlebar-name  { color: #2a0e04; }
+[data-theme="sunset"] .titlebar-name { color: #2a0e04; }
 [data-theme="candy"] .titlebar-name  { color: #3a1030; }
 
 /* Light themes: give theme button more visible border */
@@ -512,7 +504,6 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
 [data-theme="ocean"] .theme-btn,
 [data-theme="sprout"] .theme-btn,
 [data-theme="sunset"] .theme-btn,
-[data-theme="peach"] .theme-btn,
 [data-theme="candy"] .theme-btn {
   border-color: var(--border2);
   background: rgba(255,255,255,0.7);
@@ -555,9 +546,7 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
       <div class="theme-opt" data-theme="midnight"  onclick="pickTheme('midnight')"> <span class="theme-opt-icon">🌙</span> <span class="theme-opt-name">Midnight</span> <span class="theme-opt-check">✓</span></div>
       <div class="theme-opt" data-theme="sprout"    onclick="pickTheme('sprout')">   <span class="theme-opt-icon">🌱</span> <span class="theme-opt-name">Spring</span>   <span class="theme-opt-check">✓</span></div>
       <div class="theme-opt" data-theme="candy"     onclick="pickTheme('candy')">    <span class="theme-opt-icon">🌸</span> <span class="theme-opt-name">Candy</span>    <span class="theme-opt-check">✓</span></div>
-      <div class="theme-opt" data-theme="ocean"     onclick="pickTheme('ocean')">    <span class="theme-opt-icon">🌊</span> <span class="theme-opt-name">Ocean</span>    <span class="theme-opt-check">✓</span></div>
-      <div class="theme-opt" data-theme="peach"     onclick="pickTheme('peach')">    <span class="theme-opt-icon">🍑</span> <span class="theme-opt-name">Peach</span>    <span class="theme-opt-check">✓</span></div>
-      <div class="theme-opt" data-theme="fog"       onclick="pickTheme('fog')">      <span class="theme-opt-icon">🌫️</span> <span class="theme-opt-name">Fog</span>      <span class="theme-opt-check">✓</span></div>
+      <div class="theme-opt" data-theme="ocean"     onclick="pickTheme('ocean')">    <span class="theme-opt-icon">🌊</span> <span class="theme-opt-name">Ocean</span>    <span class="theme-opt-check">✓</span></div>      <div class="theme-opt" data-theme="fog"       onclick="pickTheme('fog')">      <span class="theme-opt-icon">🌫️</span> <span class="theme-opt-name">Fog</span>      <span class="theme-opt-check">✓</span></div>
       <div class="theme-opt" data-theme="terminal"  onclick="pickTheme('terminal')"> <span class="theme-opt-icon">💻</span> <span class="theme-opt-name">Matrix</span>   <span class="theme-opt-check">✓</span></div>
     </div>
   </div>
@@ -1198,7 +1187,7 @@ var camDecodeCtx = camDecodeCanvas.getContext('2d');
 // ─────────────────────────────────────────────
 var THEME_ICONS = {
   light:'☀️', sunset:'🌅', twilight:'💜', midnight:'🌙',
-  sprout:'🌱', candy:'🌸', ocean:'🌊', peach:'🍑', fog:'🌫️', terminal:'💻'
+  sprout:'🌱', candy:'🌸', ocean:'🌊', fog:'🌫️', terminal:'💻'
 };
 function applyTheme(t) {
   currentTheme = t;
