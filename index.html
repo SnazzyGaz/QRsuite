@@ -1662,7 +1662,9 @@ function clearGenHistory() {
 renderGenHistory();
 
 function loadSavedIntoScanner(item) {
+  closeHistSection(); // reset history subpage state before leaving
   switchTab('scan');
+  setScanSource('file');
   var arr = item.dataURL.split(',');
   var mime = arr[0].match(/:(.*?);/)[1];
   var bstr = atob(arr[1]);
