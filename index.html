@@ -1224,12 +1224,18 @@ function clearPreview() {
   document.getElementById('preview-btns').style.display = 'none';
   document.getElementById('btn-preview-clear').style.display = 'none';
 }
+function downloadDataUrl(url, filename) {
+  var a = document.createElement('a');
+  a.download = filename;
+  a.href = url;
+  a.click();
+}
 function downloadQR() {
   if (!lastQRDataURL) return;
   var suggested = (lastQRText || '').slice(0, 40).replace(/[^a-z0-9\-_. ]/gi, '').trim() || 'qrcode';
-  var a = document.createElement('a');
-  a.download = suggested + '.png';
-  a.href = lastQRDataURL; a.click();
+  var name = prompt('Save as:', suggested);
+  if (name === null) return;
+  downloadDataUrl(lastQRDataURL, (name.trim() || 'qrcode') + '.png');
 }
 async function copyQR() {
   if (!lastQRDataURL) return;
@@ -1292,9 +1298,9 @@ function renderGenHistory() {
     dlBtn.onclick = function(e) {
       e.stopPropagation();
       var suggested = (item.text || '').slice(0, 40).replace(/[^a-z0-9\-_. ]/gi, '').trim() || 'qrcode';
-      var a = document.createElement('a');
-      a.download = suggested + '.png';
-      a.href = item.dataURL; a.click();
+      var name = prompt('Save as:', suggested);
+      if (name === null) return;
+      downloadDataUrl(item.dataURL, (name.trim() || 'qrcode') + '.png');
     };
 
     var scanBtn = document.createElement('button');
