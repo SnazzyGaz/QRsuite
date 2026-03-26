@@ -242,7 +242,7 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
 /* Scan history section */
 .scan-hist-section { width: 100%; border-top: 1px solid var(--border); padding-top: 14px; }
 .scan-hist-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-.scan-hist-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; scrollbar-width: thin; }
+.scan-hist-list { display: flex; flex-direction: column; gap: 8px; scrollbar-width: thin; }
 .scan-hist-list::-webkit-scrollbar { width: 4px; }
 .scan-hist-list::-webkit-scrollbar-track { background: var(--bg3); }
 .scan-hist-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
@@ -346,7 +346,7 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
       <div class="tabs">
         <div class="tab active" onclick="switchTab('generate')">generate</div>
         <div class="tab" onclick="switchTab('scan')">scan</div>
-        <div class="tab" onclick="switchTab('saved')">saved</div>
+        <div class="tab" onclick="switchTab('saved')">history</div>
       </div>
 
       <!-- ═══════════════════════════════ TAB: GENERATE ═══════════════════════════════ -->
@@ -386,7 +386,7 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
                   <div class="ctrl-label">Art style</div>
                   <select id="art-style">
                     <option value="square" selected>■ Square</option>
-                    <option value="snake">◙ Rounded</option>
+                    <option value="rounded">◙ Rounded</option>
                     <option value="dots">● Dots</option>
                   </select>
                 </div>
@@ -439,23 +439,14 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
               <canvas id="qr-canvas"></canvas>
             </div>
             <div class="qr-meta" id="qr-meta"></div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
-              <button class="btn-dl" id="btn-dl" onclick="downloadQR()">Save PNG</button>
-              <button class="btn-dl" id="btn-copy" onclick="copyQR()">Copy PNG</button>
+            <div id="preview-btns" style="display:none;flex-direction:column;gap:6px;width:100%">
+              <button id="btn-dl" onclick="downloadQR()" style="width:100%;padding:9px 14px;background:var(--accent);border:none;border-radius:9px;color:#fff;font-family:var(--font-ui);font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.01em;">⬇ Save PNG</button>
+              <div style="display:flex;gap:6px;">
+                <button class="btn-dl" id="btn-copy" onclick="copyQR()" style="flex:1;">Copy PNG</button>
+              </div>
             </div>
           </div>
         </div>
-
-        <!-- ── Generated history strip ── -->
-        <div class="gen-hist-section" id="gen-hist-section">
-          <div class="gen-hist-head">
-            <div class="lbl" style="margin:0">Recent</div>
-            <button class="btn-clear" onclick="clearGenHistory()">clear all</button>
-          </div>
-          <div id="gen-hist-empty" class="gen-hist-empty">nothing generated yet</div>
-          <div class="gen-hist-row" id="gen-hist-row" style="display:none"></div>
-        </div>
-      </div>
       <!-- /tab generate -->
 
       <!-- ═══════════════════════════════ TAB: SCAN ═══════════════════════════════ -->
@@ -517,35 +508,40 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
             <div class="scan-actions" id="scan-actions"></div>
           </div>
 
-          <!-- Scan history -->
-          <div class="scan-hist-section" id="scan-hist-section">
-            <div class="scan-hist-head">
-              <div class="lbl" style="margin:0">Scan history</div>
-              <button class="btn-clear" onclick="clearScanHistory()">clear all</button>
-            </div>
-            <div class="scan-hist-empty" id="scan-hist-empty">nothing scanned yet</div>
-            <div class="scan-hist-list" id="scan-hist-list" style="display:none"></div>
-          </div>
-
         </div>
       </div>
       <!-- /tab scan -->
 
-      <!-- ═══════════════════════════════ TAB: SAVED ═══════════════════════════════ -->
+      <!-- ═══════════════════════════════ TAB: HISTORY ═══════════════════════════════ -->
       <div class="tab-panel" id="tab-saved">
-        <div style="padding:24px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <div class="lbl" style="margin:0">Saved QR codes</div>
-            <button class="btn-clear" onclick="clearHistory()">clear all</button>
+        <div style="padding:18px 16px;">
+
+          <!-- Generated history -->
+          <div style="margin-bottom:24px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div class="lbl" style="margin:0;">⚡ Generated</div>
+              <button class="btn-clear" onclick="clearGenHistory()">clear all</button>
+            </div>
+            <div id="gen-hist-empty" class="gen-hist-empty" style="padding:20px 0;">nothing generated yet</div>
+            <div id="hist-list" style="display:none;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;"></div>
           </div>
-          <div id="hist-empty" style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 0;color:var(--text3);font-size:13px">
-            <div style="width:40px;height:40px;border:1px dashed var(--border2);border-radius:8px"></div>
-            <span>no saved QR codes yet</span>
+
+          <!-- Divider -->
+          <div style="border-top:1px solid var(--border);margin-bottom:24px;"></div>
+
+          <!-- Scan history -->
+          <div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <div class="lbl" style="margin:0;">📷 Scanned</div>
+              <button class="btn-clear" onclick="clearScanHistory()">clear all</button>
+            </div>
+            <div class="scan-hist-empty" id="scan-hist-empty" style="padding:20px 0;">nothing scanned yet</div>
+            <div class="scan-hist-list" id="scan-hist-list" style="display:none;max-height:none;"></div>
           </div>
-          <div id="hist-list" style="display:none;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px"></div>
+
         </div>
       </div>
-      <!-- /tab saved -->
+      <!-- /tab history -->
 
     </div><!-- /card -->
   </div><!-- /max-width -->
@@ -929,7 +925,6 @@ return{qrcode:qrcode,QRErrorCorrectionLevel:QRErrorCorrectionLevel};
 // ─────────────────────────────────────────────
 var currentTheme = localStorage.getItem('qr-theme') || 'twilight';
 var genHistory = JSON.parse(localStorage.getItem('qr-gen-history') || '[]');
-var savedHistory = JSON.parse(localStorage.getItem('qr-saved-history') || '[]');
 var scanHistory = JSON.parse(localStorage.getItem('qr-scan-history') || '[]');
 
 // Camera state
@@ -1039,152 +1034,201 @@ function flipColors() {
 var lastQRDataURL = null;
 var lastQRText = '';
 
-function generateQR() {
+function generateQR(skipHistory) {
   var text = document.getElementById('qr-input').value.trim();
   var errDiv = document.getElementById('error-msg');
   errDiv.style.display = 'none';
   if (!text) { errDiv.textContent = 'Enter some content first.'; errDiv.style.display = 'block'; return; }
 
   var ecLvl = document.getElementById('ec-level').value;
-  var size = parseInt(document.getElementById('cell-size').value);
+  var targetSize = parseInt(document.getElementById('cell-size').value);
   var artStyle = document.getElementById('art-style').value;
   var finderStyle = document.getElementById('finder-style').value;
   var darkColor = document.getElementById('dark-color').value;
   var lightColor = document.getElementById('light-color').value;
   var transparent = document.getElementById('transparent-bg').checked;
 
+  // Probe at cellPx=1 to find module count, then calculate ideal cell size
+  var cellPx;
   try {
-    var qr = QRCodeGenerator.qrcode(0, QRCodeGenerator.QRErrorCorrectionLevel[ecLvl]);
-    qr.addData(text); qr.make();
-    var mc = qr.getModuleCount();
-    var margin = 2;
-    var cellPx = Math.floor(size / (mc + margin * 2));
-    var totalPx = cellPx * (mc + margin * 2);
-
-    var canvas = document.getElementById('qr-canvas');
-    canvas.width = canvas.height = totalPx;
-    var ctx = canvas.getContext('2d');
-
-    // Background
-    if (transparent) {
-      ctx.clearRect(0, 0, totalPx, totalPx);
-    } else {
-      ctx.fillStyle = lightColor;
-      ctx.fillRect(0, 0, totalPx, totalPx);
-    }
-
-    ctx.fillStyle = darkColor;
-
-    var isFinderZone = function(row, col) {
-      if (row < 8 && col < 8) return true;
-      if (row < 8 && col >= mc - 8) return true;
-      if (row >= mc - 8 && col < 8) return true;
-      return false;
-    };
-
-    for (var r = 0; r < mc; r++) {
-      for (var c = 0; c < mc; c++) {
-        if (!qr.isDark(r, c)) continue;
-        var x = (c + margin) * cellPx;
-        var y = (r + margin) * cellPx;
-        var isFinder = isFinderZone(r, c);
-
-        if (isFinder) {
-          // Finder cells drawn separately below
-          continue;
-        }
-
-        if (artStyle === 'dots') {
-          ctx.beginPath();
-          ctx.arc(x + cellPx/2, y + cellPx/2, cellPx * 0.42, 0, Math.PI * 2);
-          ctx.fill();
-        } else if (artStyle === 'snake') {
-          var rad = cellPx * 0.35;
-          ctx.beginPath();
-          ctx.roundRect(x + 0.5, y + 0.5, cellPx - 1, cellPx - 1, rad);
-          ctx.fill();
-        } else {
-          ctx.fillRect(x, y, cellPx, cellPx);
-        }
-      }
-    }
-
-    // Draw finder patterns
-    var drawFinder = function(baseRow, baseCol) {
-      var x0 = (baseCol + margin) * cellPx;
-      var y0 = (baseRow + margin) * cellPx;
-      var s = cellPx * 7;
-      ctx.fillStyle = darkColor;
-      if (finderStyle === 'circle') {
-        // Outer circle
-        ctx.beginPath();
-        ctx.arc(x0 + s/2, y0 + s/2, s/2, 0, Math.PI*2);
-        ctx.fill();
-        if (!transparent) { ctx.fillStyle = lightColor; } else { ctx.clearRect(x0 + cellPx, y0 + cellPx, s - 2*cellPx, s - 2*cellPx); ctx.fillStyle = 'rgba(0,0,0,0)'; }
-        ctx.beginPath();
-        ctx.arc(x0 + s/2, y0 + s/2, s/2 - cellPx, 0, Math.PI*2);
-        ctx.fill();
-        ctx.fillStyle = darkColor;
-        ctx.beginPath();
-        ctx.arc(x0 + s/2, y0 + s/2, s/2 - 2*cellPx, 0, Math.PI*2);
-        ctx.fill();
-      } else if (finderStyle === 'rounded') {
-        var r2 = cellPx * 1.5;
-        ctx.beginPath(); ctx.roundRect(x0, y0, s, s, r2); ctx.fill();
-        ctx.fillStyle = transparent ? 'rgba(0,0,0,0)' : lightColor;
-        ctx.beginPath(); ctx.roundRect(x0+cellPx, y0+cellPx, s-2*cellPx, s-2*cellPx, r2*0.6); ctx.fill();
-        ctx.fillStyle = darkColor;
-        ctx.beginPath(); ctx.roundRect(x0+2*cellPx, y0+2*cellPx, s-4*cellPx, s-4*cellPx, r2*0.3); ctx.fill();
-      } else {
-        // square
-        ctx.fillRect(x0, y0, s, s);
-        ctx.fillStyle = transparent ? 'rgba(0,0,0,0)' : lightColor;
-        ctx.fillRect(x0+cellPx, y0+cellPx, s-2*cellPx, s-2*cellPx);
-        ctx.fillStyle = darkColor;
-        ctx.fillRect(x0+2*cellPx, y0+2*cellPx, s-4*cellPx, s-4*cellPx);
-      }
-      ctx.fillStyle = darkColor;
-    };
-
-    drawFinder(0, 0);
-    drawFinder(0, mc - 7);
-    drawFinder(mc - 7, 0);
-
-    // Store
-    var dataURL = canvas.toDataURL('image/png');
-    lastQRDataURL = dataURL;
-    lastQRText = text;
-
-    // Show
-    document.getElementById('qr-placeholder').style.display = 'none';
-    canvas.style.display = 'block';
-    document.getElementById('qr-meta').textContent = mc + '×' + mc + ' · ' + totalPx + 'px · EC ' + ecLvl;
-    document.getElementById('btn-dl').style.display = '';
-    document.getElementById('btn-copy').style.display = '';
-    document.getElementById('btn-preview-clear').style.display = '';
-
-    // Save to gen history
-    addToGenHistory({ text, dataURL, ecLvl, size, ts: Date.now() });
-
+    var probeQR = QRCodeGenerator.qrcode(0, QRCodeGenerator.QRErrorCorrectionLevel[ecLvl]);
+    probeQR.addData(text); probeQR.make();
+    var mc = probeQR.getModuleCount();
+    cellPx = Math.max(1, Math.floor(targetSize / (mc + 8)));
   } catch(e) {
     errDiv.textContent = 'Error: ' + e.message;
     errDiv.style.display = 'block';
+    return;
+  }
+
+  var margin = cellPx * 4;
+  var totalPx = mc * cellPx + margin * 2;
+
+  var offscreen = document.createElement('canvas');
+  offscreen.width = offscreen.height = totalPx;
+  var ctx = offscreen.getContext('2d');
+
+  // Background
+  if (!transparent) {
+    ctx.fillStyle = lightColor;
+    ctx.fillRect(0, 0, totalPx, totalPx);
+  }
+
+  ctx.fillStyle = darkColor;
+
+  var isFinder = function(r, c) {
+    return (r < 7 && c < 7) || (r < 7 && c >= mc - 7) || (r >= mc - 7 && c < 7);
+  };
+
+  // Helper: draw a rounded rect path
+  var roundRect = function(x, y, w, h, rad) {
+    ctx.beginPath();
+    ctx.moveTo(x + rad, y);
+    ctx.lineTo(x + w - rad, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + rad);
+    ctx.lineTo(x + w, y + h - rad);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+    ctx.lineTo(x + rad, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
+    ctx.lineTo(x, y + rad);
+    ctx.quadraticCurveTo(x, y, x + rad, y);
+    ctx.closePath();
+    ctx.fill();
+  };
+
+  // Draw finder patterns
+  var drawFinder = function(baseRow, baseCol) {
+    var x0 = margin + baseCol * cellPx;
+    var y0 = margin + baseRow * cellPx;
+    var outer = 7 * cellPx;
+    var inner = 5 * cellPx;
+    var center = 3 * cellPx;
+    ctx.fillStyle = darkColor;
+
+    if (finderStyle === 'circle') {
+      ctx.beginPath();
+      ctx.arc(x0 + outer/2, y0 + outer/2, outer/2, 0, Math.PI*2, false);
+      ctx.arc(x0 + outer/2, y0 + outer/2, inner/2, 0, Math.PI*2, true);
+      ctx.fill('evenodd');
+      if (transparent) {
+        // gap is already hollow from evenodd
+      } else {
+        ctx.fillStyle = lightColor;
+        ctx.beginPath();
+        ctx.arc(x0 + outer/2, y0 + outer/2, inner/2, 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.fillStyle = darkColor;
+      ctx.beginPath();
+      ctx.arc(x0 + outer/2, y0 + outer/2, center/2, 0, Math.PI*2);
+      ctx.fill();
+    } else if (finderStyle === 'rounded') {
+      var rOuter = cellPx * 1.5, rInner = cellPx, rCenter = cellPx * 0.8;
+      roundRect(x0, y0, outer, outer, rOuter);
+      if (transparent) {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0,0,0,1)';
+        roundRect(x0 + cellPx, y0 + cellPx, inner, inner, rInner);
+        ctx.globalCompositeOperation = 'source-over';
+      } else {
+        ctx.fillStyle = lightColor;
+        roundRect(x0 + cellPx, y0 + cellPx, inner, inner, rInner);
+      }
+      ctx.fillStyle = darkColor;
+      roundRect(x0 + cellPx*2, y0 + cellPx*2, center, center, rCenter);
+    } else {
+      ctx.fillRect(x0, y0, outer, outer);
+      if (transparent) {
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = 'rgba(0,0,0,1)';
+        ctx.fillRect(x0 + cellPx, y0 + cellPx, inner, inner);
+        ctx.globalCompositeOperation = 'source-over';
+      } else {
+        ctx.fillStyle = lightColor;
+        ctx.fillRect(x0 + cellPx, y0 + cellPx, inner, inner);
+      }
+      ctx.fillStyle = darkColor;
+      ctx.fillRect(x0 + cellPx*2, y0 + cellPx*2, center, center);
+    }
+    ctx.fillStyle = darkColor;
+  };
+
+  drawFinder(0, 0);
+  drawFinder(0, mc - 7);
+  drawFinder(mc - 7, 0);
+
+  // Draw data modules
+  ctx.fillStyle = darkColor;
+  var qr = probeQR; // reuse the already-made qr object
+  for (var r = 0; r < mc; r++) {
+    for (var c = 0; c < mc; c++) {
+      if (isFinder(r, c)) continue;
+      if (!qr.isDark(r, c)) continue;
+      var x = margin + c * cellPx;
+      var y = margin + r * cellPx;
+      var s = cellPx;
+
+      if (artStyle === 'dots') {
+        ctx.beginPath();
+        ctx.arc(x + s/2, y + s/2, s * 0.42, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (artStyle === 'rounded') {
+        var rr = s * 0.35;
+        roundRect(x + s*0.05, y + s*0.05, s*0.9, s*0.9, rr);
+      } else {
+        ctx.fillRect(x, y, s, s);
+      }
+    }
+  }
+
+  // Copy to visible canvas
+  var canvas = document.getElementById('qr-canvas');
+  canvas.width = totalPx;
+  canvas.height = totalPx;
+  var pctx = canvas.getContext('2d');
+  pctx.imageSmoothingEnabled = false;
+  pctx.drawImage(offscreen, 0, 0);
+
+  if (transparent) {
+    canvas.style.backgroundImage = 'linear-gradient(45deg,var(--bg2) 25%,transparent 25%),linear-gradient(-45deg,var(--bg2) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,var(--bg2) 75%),linear-gradient(-45deg,transparent 75%,var(--bg2) 75%)';
+    canvas.style.backgroundColor = 'var(--border)';
+  } else {
+    canvas.style.backgroundImage = 'none';
+    canvas.style.backgroundColor = 'transparent';
+  }
+
+  // Store
+  var dataURL = offscreen.toDataURL('image/png');
+  lastQRDataURL = dataURL;
+  lastQRText = text;
+
+  // Show
+  document.getElementById('qr-placeholder').style.display = 'none';
+  canvas.style.display = 'block';
+  document.getElementById('qr-meta').textContent = mc + '×' + mc + ' · ' + totalPx + 'px · EC ' + ecLvl;
+  document.getElementById('preview-btns').style.display = 'flex';
+  document.getElementById('btn-preview-clear').style.display = '';
+
+  // Save to gen history
+  if (!skipHistory) {
+    addToGenHistory({ text, dataURL, ecLvl, size: targetSize, artStyle, finderStyle, dark: darkColor, light: lightColor, ts: Date.now() });
   }
 }
 
 function clearPreview() {
   lastQRDataURL = null; lastQRText = '';
   document.getElementById('qr-canvas').style.display = 'none';
+  document.getElementById('qr-canvas').style.backgroundImage = 'none';
   document.getElementById('qr-placeholder').style.display = '';
   document.getElementById('qr-meta').textContent = '';
-  document.getElementById('btn-dl').style.display = 'none';
-  document.getElementById('btn-copy').style.display = 'none';
+  document.getElementById('preview-btns').style.display = 'none';
   document.getElementById('btn-preview-clear').style.display = 'none';
 }
 function downloadQR() {
   if (!lastQRDataURL) return;
+  var suggested = (lastQRText || '').slice(0, 40).replace(/[^a-z0-9\-_. ]/gi, '').trim() || 'qrcode';
   var a = document.createElement('a');
-  a.download = 'qr-' + Date.now() + '.png';
+  a.download = suggested + '.png';
   a.href = lastQRDataURL; a.click();
 }
 async function copyQR() {
@@ -1199,44 +1243,97 @@ async function copyQR() {
 }
 
 // ─────────────────────────────────────────────
-// Generated history strip
+// Generated history (renders into history tab)
 // ─────────────────────────────────────────────
 function addToGenHistory(item) {
   genHistory.unshift(item);
-  if (genHistory.length > 20) genHistory.pop();
+  if (genHistory.length > 30) genHistory.pop();
   localStorage.setItem('qr-gen-history', JSON.stringify(genHistory));
   renderGenHistory();
 }
 function renderGenHistory() {
-  var row = document.getElementById('gen-hist-row');
+  var list = document.getElementById('hist-list');
   var empty = document.getElementById('gen-hist-empty');
   if (!genHistory.length) {
-    row.style.display = 'none'; empty.style.display = ''; return;
+    list.style.display = 'none'; empty.style.display = ''; return;
   }
-  row.style.display = 'flex'; empty.style.display = 'none';
-  row.innerHTML = '';
-  genHistory.forEach((item, idx) => {
+  list.style.display = 'grid'; empty.style.display = 'none';
+  list.innerHTML = '';
+  genHistory.forEach(function(item, idx) {
     var card = document.createElement('div');
-    card.className = 'gen-hist-card';
-    var label = (item.text || '').substring(0, 14) + (item.text.length > 14 ? '…' : '');
-    card.innerHTML = `
-      <img class="gen-hist-thumb" src="${item.dataURL}" alt="">
-      <div class="gen-hist-label">${escHtml(label)}</div>
-      <button class="gen-hist-del" onclick="deleteGenHistory(event,${idx})">✕</button>
-    `;
-    card.addEventListener('click', () => {
-      document.getElementById('qr-input').value = item.text;
-      generateQR();
-      window.scrollTo({top:0,behavior:'smooth'});
-    });
-    row.appendChild(card);
+    card.className = 'saved-card';
+
+    var img = document.createElement('img');
+    img.src = item.dataURL;
+    img.style.width = '100%';
+    img.style.borderRadius = '6px';
+    img.style.imageRendering = 'pixelated';
+
+    var nameEl = document.createElement('div');
+    nameEl.className = 'saved-name';
+    var txt = item.text || '';
+    nameEl.textContent = txt.length > 40 ? txt.substring(0, 40) + '…' : txt;
+
+    var meta = document.createElement('div');
+    meta.className = 'saved-meta';
+    var timeStr = item.ts ? formatRelativeTime(item.ts) : '';
+    var metaParts = ['EC:' + (item.ecLvl || '?')];
+    if (item.artStyle) metaParts.push(item.artStyle);
+    if (item.size) metaParts.push(item.size + 'px');
+    metaParts.push(timeStr);
+    meta.textContent = metaParts.join(' · ');
+
+    var actions = document.createElement('div');
+    actions.className = 'saved-actions';
+
+    var dlBtn = document.createElement('button');
+    dlBtn.className = 'saved-btn';
+    dlBtn.textContent = 'download';
+    dlBtn.onclick = function(e) {
+      e.stopPropagation();
+      var suggested = (item.text || '').slice(0, 40).replace(/[^a-z0-9\-_. ]/gi, '').trim() || 'qrcode';
+      var a = document.createElement('a');
+      a.download = suggested + '.png';
+      a.href = item.dataURL; a.click();
+    };
+
+    var scanBtn = document.createElement('button');
+    scanBtn.className = 'saved-btn';
+    scanBtn.textContent = 'scan';
+    scanBtn.onclick = function(e) {
+      e.stopPropagation();
+      loadSavedIntoScanner(item);
+    };
+
+    var settingsBtn = document.createElement('button');
+    settingsBtn.className = 'saved-btn';
+    settingsBtn.textContent = 'use settings';
+    settingsBtn.onclick = function(e) {
+      e.stopPropagation();
+      loadSavedItem(item);
+      switchTab('generate');
+    };
+
+    var delBtn = document.createElement('button');
+    delBtn.className = 'saved-btn del';
+    delBtn.textContent = 'delete';
+    delBtn.onclick = function(e) {
+      e.stopPropagation();
+      genHistory.splice(idx, 1);
+      localStorage.setItem('qr-gen-history', JSON.stringify(genHistory));
+      renderGenHistory();
+    };
+
+    actions.appendChild(dlBtn);
+    actions.appendChild(scanBtn);
+    actions.appendChild(settingsBtn);
+    actions.appendChild(delBtn);
+    card.appendChild(img);
+    card.appendChild(nameEl);
+    card.appendChild(meta);
+    card.appendChild(actions);
+    list.appendChild(card);
   });
-}
-function deleteGenHistory(e, idx) {
-  e.stopPropagation();
-  genHistory.splice(idx, 1);
-  localStorage.setItem('qr-gen-history', JSON.stringify(genHistory));
-  renderGenHistory();
 }
 function clearGenHistory() {
   genHistory = [];
@@ -1245,53 +1342,35 @@ function clearGenHistory() {
 }
 renderGenHistory();
 
-// ─────────────────────────────────────────────
-// Saved (generated) history tab
-// ─────────────────────────────────────────────
-function addToSaved(item) {
-  savedHistory.unshift(item);
-  localStorage.setItem('qr-saved-history', JSON.stringify(savedHistory));
-  renderSavedHistory();
+function loadSavedIntoScanner(item) {
+  switchTab('scan');
+  var arr = item.dataURL.split(',');
+  var mime = arr[0].match(/:(.*?);/)[1];
+  var bstr = atob(arr[1]);
+  var n = bstr.length;
+  var u8 = new Uint8Array(n);
+  while (n--) u8[n] = bstr.charCodeAt(n);
+  var file = new File([u8], 'qrcode.png', { type: mime });
+  handleScanFile(file);
 }
-function renderSavedHistory() {
-  var list = document.getElementById('hist-list');
-  var empty = document.getElementById('hist-empty');
-  if (!savedHistory.length) {
-    list.style.display = 'none'; empty.style.display = 'flex'; return;
+
+function loadSavedItem(item) {
+  document.getElementById('qr-input').value = item.text || '';
+  if (item.ecLvl) document.getElementById('ec-level').value = item.ecLvl;
+  if (item.size) {
+    var validSizes = [150, 300, 500, 800, 1200, 2400];
+    var nearest = validSizes.reduce(function(a, b) { return Math.abs(b - item.size) < Math.abs(a - item.size) ? b : a; });
+    document.getElementById('cell-size').value = nearest;
   }
-  list.style.display = 'grid'; empty.style.display = 'none';
-  list.innerHTML = '';
-  savedHistory.forEach((item, idx) => {
-    var card = document.createElement('div');
-    card.className = 'saved-card';
-    card.innerHTML = `
-      <img src="${item.dataURL}" alt="">
-      <div class="saved-name">${escHtml(item.name || item.text.substring(0,40))}</div>
-      <div class="saved-meta">${new Date(item.ts).toLocaleDateString()}</div>
-      <div class="saved-actions">
-        <button class="saved-btn" onclick="dlSaved(${idx})">download</button>
-        <button class="saved-btn del" onclick="delSaved(${idx})">delete</button>
-      </div>
-    `;
-    list.appendChild(card);
-  });
+  if (item.dark) { document.getElementById('dark-color').value = item.dark; updateHex('dark-color','dark-hex'); }
+  if (item.light) { document.getElementById('light-color').value = item.light; updateHex('light-color','light-hex'); }
+  if (item.artStyle) document.getElementById('art-style').value = item.artStyle;
+  if (item.finderStyle) document.getElementById('finder-style').value = item.finderStyle;
+  generateQR(true);
 }
-function dlSaved(idx) {
-  var a = document.createElement('a');
-  a.download = 'qr-' + Date.now() + '.png';
-  a.href = savedHistory[idx].dataURL; a.click();
-}
-function delSaved(idx) {
-  savedHistory.splice(idx, 1);
-  localStorage.setItem('qr-saved-history', JSON.stringify(savedHistory));
-  renderSavedHistory();
-}
-function clearHistory() {
-  savedHistory = [];
-  localStorage.setItem('qr-saved-history', JSON.stringify(savedHistory));
-  renderSavedHistory();
-}
-renderSavedHistory();
+
+// Refresh relative timestamps every 30s
+setInterval(function() { renderGenHistory(); renderScanHistory(); }, 30000);
 
 // ─────────────────────────────────────────────
 // QR Content Type Detection
