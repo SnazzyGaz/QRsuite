@@ -305,6 +305,47 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
 /* Watermark */
 #watermark { text-align: center; padding: 10px 10px calc(10px + var(--safe-bottom)); font-family: var(--font-mono); font-size: 11px; color: var(--text3); opacity: 0.5; user-select: none; cursor: pointer; transition: opacity 0.2s; }
 #watermark:active { opacity: 0.9; }
+
+/* ── History redesign ── */
+.hist-home { padding: 24px 16px; display: flex; flex-direction: column; gap: 14px; }
+.hist-home-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: var(--text3); text-transform: uppercase; text-align: center; margin-bottom: 4px; }
+.hist-choice-btn {
+  width: 100%; padding: 22px 20px;
+  background: var(--bg3); border: 1.5px solid var(--border2);
+  border-radius: 16px; cursor: pointer;
+  display: flex; align-items: center; gap: 16px;
+  transition: background 0.18s, border-color 0.18s, transform 0.12s;
+  -webkit-tap-highlight-color: transparent; text-align: left;
+}
+.hist-choice-btn:active { transform: scale(0.97); background: var(--accent-bg); border-color: var(--accent); }
+.hist-choice-icon { font-size: 32px; line-height: 1; flex-shrink: 0; }
+.hist-choice-text { flex: 1; }
+.hist-choice-label { font-size: 17px; font-weight: 600; color: var(--text); letter-spacing: 0.01em; margin-bottom: 3px; }
+.hist-choice-sub { font-size: 12px; color: var(--text3); font-family: var(--font-mono); }
+.hist-choice-arrow { font-size: 18px; color: var(--text3); flex-shrink: 0; }
+
+.hist-subpage { display: none; flex-direction: column; }
+.hist-subpage.active { display: flex; }
+.hist-subpage-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px 0; margin-bottom: 14px;
+}
+.hist-back-btn {
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 9px; color: var(--text2); font-family: var(--font-ui);
+  font-size: 13px; padding: 8px 14px; cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: background 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+}
+.hist-back-btn:active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent-fg); }
+.hist-subpage-title { font-size: 15px; font-weight: 600; color: var(--text); flex: 1; }
+.hist-subpage-clear { font-size: 12px; color: var(--text3); background: none; border: none; cursor: pointer; font-family: var(--font-ui); padding: 3px 8px; border-radius: 6px; transition: color 0.15s; -webkit-tap-highlight-color: transparent; }
+.hist-subpage-clear:active { color: #e07070; }
+.hist-subpage-body { padding: 0 16px 20px; }
+
+.hist-count-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 7px; background: var(--accent-bg); border: 1px solid var(--border2); border-radius: 20px; font-family: var(--font-mono); font-size: 10px; color: var(--accent-fg); }
+
 </style>
 </head>
 <body>
@@ -515,32 +556,58 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
 
       <!-- ═══════════════════════════════ TAB: HISTORY ═══════════════════════════════ -->
       <div class="tab-panel" id="tab-saved">
-        <div style="padding:18px 16px;">
 
-          <!-- Generated history -->
-          <div style="margin-bottom:24px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-              <div class="lbl" style="margin:0;">⚡ Generated</div>
-              <button class="btn-clear" onclick="clearGenHistory()">clear all</button>
+        <!-- ── History home: pick a section ── -->
+        <div class="hist-home" id="hist-home">
+          <div class="hist-home-title">History</div>
+
+          <button class="hist-choice-btn" onclick="openHistSection('generated')">
+            <span class="hist-choice-icon">⚡</span>
+            <div class="hist-choice-text">
+              <div class="hist-choice-label">Generated</div>
+              <div class="hist-choice-sub" id="gen-hist-sub">QR codes you created</div>
             </div>
-            <div id="gen-hist-empty" class="gen-hist-empty" style="padding:20px 0;">nothing generated yet</div>
+            <span class="hist-count-badge" id="gen-hist-count">0</span>
+            <span class="hist-choice-arrow">›</span>
+          </button>
+
+          <button class="hist-choice-btn" onclick="openHistSection('scanned')">
+            <span class="hist-choice-icon">📷</span>
+            <div class="hist-choice-text">
+              <div class="hist-choice-label">Scanned</div>
+              <div class="hist-choice-sub" id="scan-hist-sub">QR codes you scanned</div>
+            </div>
+            <span class="hist-count-badge" id="scan-hist-count">0</span>
+            <span class="hist-choice-arrow">›</span>
+          </button>
+        </div>
+
+        <!-- ── Generated sub-page ── -->
+        <div class="hist-subpage" id="hist-subpage-generated">
+          <div class="hist-subpage-header">
+            <button class="hist-back-btn" onclick="closeHistSection()">‹ Back</button>
+            <span class="hist-subpage-title">⚡ Generated</span>
+            <button class="hist-subpage-clear" onclick="clearGenHistory()">clear all</button>
+          </div>
+          <div class="hist-subpage-body">
+            <div id="gen-hist-empty" class="gen-hist-empty" style="padding:20px 0;text-align:center;">nothing generated yet</div>
             <div id="hist-list" style="display:none;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;"></div>
           </div>
+        </div>
 
-          <!-- Divider -->
-          <div style="border-top:1px solid var(--border);margin-bottom:24px;"></div>
-
-          <!-- Scan history -->
-          <div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-              <div class="lbl" style="margin:0;">📷 Scanned</div>
-              <button class="btn-clear" onclick="clearScanHistory()">clear all</button>
-            </div>
-            <div class="scan-hist-empty" id="scan-hist-empty" style="padding:20px 0;">nothing scanned yet</div>
+        <!-- ── Scanned sub-page ── -->
+        <div class="hist-subpage" id="hist-subpage-scanned">
+          <div class="hist-subpage-header">
+            <button class="hist-back-btn" onclick="closeHistSection()">‹ Back</button>
+            <span class="hist-subpage-title">📷 Scanned</span>
+            <button class="hist-subpage-clear" onclick="clearScanHistory()">clear all</button>
+          </div>
+          <div class="hist-subpage-body">
+            <div class="scan-hist-empty" id="scan-hist-empty" style="padding:20px 0;text-align:center;">nothing scanned yet</div>
             <div class="scan-hist-list" id="scan-hist-list" style="display:none;max-height:none;"></div>
           </div>
-
         </div>
+
       </div>
       <!-- /tab history -->
 
@@ -1257,6 +1324,7 @@ function addToGenHistory(item) {
   if (genHistory.length > 30) genHistory.pop();
   localStorage.setItem('qr-gen-history', JSON.stringify(genHistory));
   renderGenHistory();
+  updateHistCounts();
 }
 function renderGenHistory() {
   var list = document.getElementById('hist-list');
@@ -1963,6 +2031,41 @@ document.getElementById('install-btn').addEventListener('click', async () => {
 document.getElementById('install-dismiss').addEventListener('click', () => {
   document.getElementById('install-banner').style.display = 'none';
 });
+
+// ─── History section navigation ───────────────────────────────────────────
+function openHistSection(section) {
+  document.getElementById('hist-home').style.display = 'none';
+  document.getElementById('hist-subpage-generated').classList.remove('active');
+  document.getElementById('hist-subpage-scanned').classList.remove('active');
+  document.getElementById('hist-subpage-' + section).classList.add('active');
+}
+function closeHistSection() {
+  document.getElementById('hist-subpage-generated').classList.remove('active');
+  document.getElementById('hist-subpage-scanned').classList.remove('active');
+  document.getElementById('hist-home').style.display = '';
+}
+function updateHistCounts() {
+  var gc = genHistory.length;
+  var sc = scanHistory.length;
+  var gcEl = document.getElementById('gen-hist-count');
+  var scEl = document.getElementById('scan-hist-count');
+  var gcSub = document.getElementById('gen-hist-sub');
+  var scSub = document.getElementById('scan-hist-sub');
+  if (gcEl) gcEl.textContent = gc;
+  if (scEl) scEl.textContent = sc;
+  if (gcSub) gcSub.textContent = gc === 0 ? 'QR codes you created' : gc + ' saved QR code' + (gc !== 1 ? 's' : '');
+  if (scSub) scSub.textContent = sc === 0 ? 'QR codes you scanned' : sc + ' scan result' + (sc !== 1 ? 's' : '');
+}
+// Reset to home whenever history tab is opened
+var _origSwitchTab = switchTab;
+switchTab = function(name) {
+  _origSwitchTab(name);
+  if (name === 'saved') {
+    closeHistSection();
+    updateHistCounts();
+  }
+};
+
 </script>
 </body>
 </html>
