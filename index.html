@@ -11,7 +11,7 @@
 <meta name="theme-color" content="#1a1f32">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icons-192.png">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1241,8 +1241,28 @@ function generateQR(skipHistory) {
         ctx.arc(x + s/2, y + s/2, s * 0.42, 0, Math.PI * 2);
         ctx.fill();
       } else if (artStyle === 'rounded') {
-        var rr = s * 0.35;
-        roundRect(x + s*0.05, y + s*0.05, s*0.9, s*0.9, rr);
+        // Neighbour-aware rounding: only round corners that are exposed
+        var hasN  = r > 0      && !isFinder(r-1,c) && qr.isDark(r-1,c);
+        var hasS  = r < mc-1   && !isFinder(r+1,c) && qr.isDark(r+1,c);
+        var hasW  = c > 0      && !isFinder(r,c-1) && qr.isDark(r,c-1);
+        var hasE  = c < mc-1   && !isFinder(r,c+1) && qr.isDark(r,c+1);
+        var rr = s * 0.38;
+        var rTL = (hasN || hasW) ? 0 : rr;
+        var rTR = (hasN || hasE) ? 0 : rr;
+        var rBR = (hasS || hasE) ? 0 : rr;
+        var rBL = (hasS || hasW) ? 0 : rr;
+        ctx.beginPath();
+        ctx.moveTo(x + rTL, y);
+        ctx.lineTo(x + s - rTR, y);
+        ctx.quadraticCurveTo(x + s, y, x + s, y + rTR);
+        ctx.lineTo(x + s, y + s - rBR);
+        ctx.quadraticCurveTo(x + s, y + s, x + s - rBR, y + s);
+        ctx.lineTo(x + rBL, y + s);
+        ctx.quadraticCurveTo(x, y + s, x, y + s - rBL);
+        ctx.lineTo(x, y + rTL);
+        ctx.quadraticCurveTo(x, y, x + rTL, y);
+        ctx.closePath();
+        ctx.fill();
       } else {
         ctx.fillRect(x, y, s, s);
       }
@@ -1760,7 +1780,7 @@ function setScanSource(src) {
     document.getElementById('cam-wrap').style.display = 'none';
   } else if (src === 'camera') {
     document.getElementById('drop-zone').style.display = 'none';
-    document.getElementById('cam-wrap').style.display = '';
+    document.getElementById('cam-wrap').style.display = 'block';
     startCamera();
   }
 }
