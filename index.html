@@ -94,7 +94,7 @@
   --success:#2a8a5a;--success-bg:#e4f4ec;
 }
 
-html { height: 100%; }
+html { height: 100%; overscroll-behavior-y: none; }
 body {
   font-family: var(--font-ui);
   background: var(--bg4);
@@ -194,7 +194,7 @@ body {
 .theme-dropdown-backdrop { display: none; position: fixed; inset: 0; z-index: 199; }
 .theme-dropdown-backdrop.open { display: block; }
 
-.app { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 12px calc(14px + var(--safe-bottom)); }
+.app { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 12px calc(14px + var(--safe-bottom)); overscroll-behavior-y: none; }
 
 .card { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; }
 
