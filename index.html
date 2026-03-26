@@ -374,6 +374,62 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
   to   { opacity: 1; transform: translateY(0); }
 }
 
+
+/* ── Scan history action sheet ── */
+.hist-action-sheet-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5); z-index: 200;
+  animation: backdropIn 0.2s ease;
+}
+.hist-action-sheet-backdrop.open { display: block; }
+@keyframes backdropIn { from { opacity:0; } to { opacity:1; } }
+
+.hist-action-sheet {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  background: var(--bg2); border-top: 1px solid var(--border2);
+  border-radius: 20px 20px 0 0;
+  padding: 0 0 calc(16px + env(safe-area-inset-bottom));
+  z-index: 201; max-height: 85vh; overflow-y: auto;
+  animation: sheetUp 0.25s cubic-bezier(0.32,0.72,0,1);
+}
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.hist-sheet-handle {
+  width: 36px; height: 4px; background: var(--border2);
+  border-radius: 2px; margin: 12px auto 0;
+}
+.hist-sheet-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.hist-sheet-icon { font-size: 22px; }
+.hist-sheet-title { flex: 1; }
+.hist-sheet-label { font-size: 13px; font-weight: 600; color: var(--text); }
+.hist-sheet-raw { font-size: 11px; color: var(--text3); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; margin-top: 2px; }
+.hist-sheet-close { background: none; border: none; color: var(--text3); font-size: 20px; cursor: pointer; padding: 4px 8px; border-radius: 8px; -webkit-tap-highlight-color: transparent; }
+.hist-sheet-close:active { color: var(--text); background: var(--bg3); }
+
+.hist-sheet-actions { padding: 10px 14px 4px; display: flex; flex-direction: column; gap: 8px; }
+.hist-sheet-btn {
+  width: 100%; padding: 14px 18px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 12px; color: var(--text);
+  font-family: var(--font-ui); font-size: 15px;
+  cursor: pointer; text-align: left;
+  display: flex; align-items: center; gap: 12px;
+  transition: background 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.hist-sheet-btn:active { background: var(--accent-bg); border-color: var(--accent); }
+.hist-sheet-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.hist-sheet-btn.primary:active { opacity: 0.85; }
+.hist-sheet-btn-icon { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
+.hist-sheet-btn-text { flex: 1; }
+.hist-sheet-btn-label { font-size: 15px; font-weight: 500; }
+.hist-sheet-btn-sub { font-size: 11px; opacity: 0.65; font-family: var(--font-mono); margin-top: 1px; }
+.hist-sheet-divider { height: 1px; background: var(--border); margin: 4px 14px; }
+
 </style>
 </head>
 <body>
@@ -1768,12 +1824,7 @@ function renderScanHistory() {
     `;
     item.addEventListener('click', (e) => {
       if (e.target.classList.contains('scan-hist-del')) return;
-      // Re-show result from history
-      var info = detectQRType(entry.raw);
-      lastScanInfo = info;
-      buildScanDetail(info);
-      // scroll to result
-      document.getElementById('scan-result').scrollIntoView({behavior:'smooth', block:'nearest'});
+      openHistSheet(entry);
     });
     list.appendChild(item);
   });
@@ -2128,6 +2179,101 @@ function toggleSettings() {
   btn.classList.toggle('open', open);
 }
 
+
+// ── Scan history action sheet ──────────────────────────────────────────────
+function openHistSheet(entry) {
+  var info = detectQRType(entry.raw);
+  document.getElementById('hist-sheet-icon').textContent = info.icon;
+  document.getElementById('hist-sheet-label').textContent = info.icon + ' ' + info.label;
+  document.getElementById('hist-sheet-raw').textContent = (entry.display || entry.raw).substring(0, 60);
+
+  var actionsEl = document.getElementById('hist-sheet-actions');
+  actionsEl.innerHTML = '';
+
+  var btns = [];
+
+  if (info.type === 'url') {
+    btns.push({ icon:'🌐', label:'Open Link', sub: info.url.substring(0,40), primary:true, fn: function(){ window.open(info.url,'_blank'); closeHistSheet(); } });
+    btns.push({ icon:'📋', label:'Copy URL', fn: function(){ copyText(info.raw); closeHistSheet(); } });
+    btns.push({ icon:'⚡', label:'Use in Generator', fn: function(){ closeHistSheet(); sendToGenerator(info.raw); } });
+  } else if (info.type === 'wifi') {
+    btns.push({ icon:'📋', label:'Copy Password', sub: info.ssid, primary:true, fn: function(){ copyText(info.pass); closeHistSheet(); } });
+    btns.push({ icon:'📤', label:'Share Details', fn: function(){ shareWifi(info.ssid, info.pass); closeHistSheet(); } });
+  } else if (info.type === 'contact') {
+    btns.push({ icon:'👤', label:'Add Contact', primary:true, fn: function(){ addContact(info.raw); closeHistSheet(); } });
+    if (info.tel) btns.push({ icon:'📞', label:'Call', sub: info.tel, fn: function(){ callNumber(info.tel); closeHistSheet(); } });
+    if (info.email) btns.push({ icon:'✉️', label:'Email', sub: info.email, fn: function(){ emailContact(info.email); closeHistSheet(); } });
+  } else if (info.type === 'phone') {
+    btns.push({ icon:'📞', label:'Call', sub: info.phone, primary:true, fn: function(){ callNumber(info.phone); closeHistSheet(); } });
+    btns.push({ icon:'💬', label:'Send Text', sub: info.phone, fn: function(){ window.location='sms:'+info.phone; closeHistSheet(); } });
+    btns.push({ icon:'📋', label:'Copy Number', fn: function(){ copyText(info.phone); closeHistSheet(); } });
+  } else if (info.type === 'email') {
+    btns.push({ icon:'✉️', label:'Send Email', sub: info.email, primary:true, fn: function(){ window.location='mailto:'+info.email; closeHistSheet(); } });
+    btns.push({ icon:'📋', label:'Copy Address', fn: function(){ copyText(info.email); closeHistSheet(); } });
+  } else if (info.type === 'sms') {
+    var smsUrl = 'sms:'+info.phone+(info.message?'?body='+encodeURIComponent(info.message):'');
+    btns.push({ icon:'💬', label:'Open SMS', sub: info.phone, primary:true, fn: function(){ window.location=smsUrl; closeHistSheet(); } });
+    btns.push({ icon:'📋', label:'Copy Number', fn: function(){ copyText(info.phone); closeHistSheet(); } });
+  } else if (info.type === 'geo') {
+    var mapsUrl = 'https://maps.google.com/?q='+info.lat+','+info.lng;
+    btns.push({ icon:'🗺️', label:'Open Maps', sub: info.lat+', '+info.lng, primary:true, fn: function(){ window.open(mapsUrl,'_blank'); closeHistSheet(); } });
+    btns.push({ icon:'📋', label:'Copy Coordinates', fn: function(){ copyText(info.raw); closeHistSheet(); } });
+  } else if (info.type === 'event') {
+    btns.push({ icon:'📋', label:'Copy Event Details', primary:true, fn: function(){ copyText(info.raw); closeHistSheet(); } });
+  } else {
+    btns.push({ icon:'📋', label:'Copy Text', primary:true, fn: function(){ copyText(info.raw); closeHistSheet(); } });
+    btns.push({ icon:'⚡', label:'Use in Generator', fn: function(){ closeHistSheet(); sendToGenerator(info.raw); } });
+  }
+
+  // Always append "Use in Generator" if not already there and not a type that already has it
+  var hasGen = btns.some(function(b){ return b.label === 'Use in Generator'; });
+  if (!hasGen && info.type !== 'url') {
+    btns.push({ icon:'⚡', label:'Use in Generator', fn: function(){ closeHistSheet(); sendToGenerator(info.raw); } });
+  }
+
+  btns.forEach(function(b, i) {
+    if (i === 1 && btns.length > 1) {
+      var div = document.createElement('div');
+      div.className = 'hist-sheet-divider';
+      actionsEl.appendChild(div);
+    }
+    var btn = document.createElement('button');
+    btn.className = 'hist-sheet-btn' + (b.primary ? ' primary' : '');
+    btn.innerHTML = '<span class="hist-sheet-btn-icon">'+b.icon+'</span><div class="hist-sheet-btn-text"><div class="hist-sheet-btn-label">'+escHtml(b.label)+'</div>'+(b.sub?'<div class="hist-sheet-btn-sub">'+escHtml(b.sub)+'</div>':'')+'</div>';
+    btn.addEventListener('click', b.fn);
+    actionsEl.appendChild(btn);
+  });
+
+  var sheet = document.getElementById('hist-action-sheet');
+  var backdrop = document.getElementById('hist-sheet-backdrop');
+  sheet.style.display = 'block';
+  backdrop.classList.add('open');
+  // Prevent body scroll
+  document.body.style.overflow = 'hidden';
+}
+
+function closeHistSheet() {
+  document.getElementById('hist-action-sheet').style.display = 'none';
+  document.getElementById('hist-sheet-backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
 </script>
+
+<!-- ── Scan history action sheet ── -->
+<div class="hist-action-sheet-backdrop" id="hist-sheet-backdrop" onclick="closeHistSheet()"></div>
+<div class="hist-action-sheet" id="hist-action-sheet" style="display:none">
+  <div class="hist-sheet-handle"></div>
+  <div class="hist-sheet-header">
+    <span class="hist-sheet-icon" id="hist-sheet-icon">📄</span>
+    <div class="hist-sheet-title">
+      <div class="hist-sheet-label" id="hist-sheet-label">Result</div>
+      <div class="hist-sheet-raw" id="hist-sheet-raw"></div>
+    </div>
+    <button class="hist-sheet-close" onclick="closeHistSheet()">✕</button>
+  </div>
+  <div class="hist-sheet-actions" id="hist-sheet-actions"></div>
+</div>
+
 </body>
 </html>
