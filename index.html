@@ -121,7 +121,12 @@ body {
 [data-theme="terminal"] .app,
 [data-theme="terminal"] #watermark { position: relative; z-index: 1; }
 [data-theme="terminal"] .titlebar { position: sticky; z-index: 101; }
-[data-theme="terminal"] .theme-dropdown { z-index: 300; }
+[data-theme="terminal"] .theme-dropdown { z-index: 300; background: #f5f5f3 !important; border-color: #d0d0cc !important; }
+[data-theme="terminal"] .theme-opt-name { color: #1a1a18 !important; font-family: var(--font-ui) !important; }
+[data-theme="terminal"] .theme-opt-check { color: #4a4ac8 !important; }
+[data-theme="terminal"] .theme-opt:active, [data-theme="terminal"] .theme-opt:hover { background: #e8e8e4 !important; }
+[data-theme="terminal"] .theme-opt.active { background: #e0e0f4 !important; }
+[data-theme="terminal"] .theme-opt-icon { font-family: initial !important; }
 [data-theme="terminal"] .theme-dropdown-backdrop { z-index: 299; }
 
 .titlebar {
@@ -187,11 +192,11 @@ body {
   cursor: pointer; transition: background 0.12s;
   -webkit-tap-highlight-color: transparent;
 }
-.theme-opt:active, .theme-opt:hover { background: var(--bg3); }
-.theme-opt.active { background: var(--accent-bg); }
+.theme-opt:active, .theme-opt:hover { background: #e8e8e4; }
+.theme-opt.active { background: #e0e0f4; }
 .theme-opt-icon { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; }
-.theme-opt-name { font-size: 13px; color: var(--text); font-family: var(--font-ui); flex: 1; }
-.theme-opt-check { font-size: 12px; color: var(--accent); opacity: 0; }
+.theme-opt-name { font-size: 13px; color: #1a1a18 !important; font-family: var(--font-ui); flex: 1; }
+.theme-opt-check { font-size: 12px; color: #4a4ac8 !important; opacity: 0; }
 .theme-opt.active .theme-opt-check { opacity: 1; }
 .theme-dropdown-backdrop { display: none; position: fixed; inset: 0; z-index: 199; }
 .theme-dropdown-backdrop.open { display: block; }
@@ -517,9 +522,7 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
 /* Terminal: green title */
 [data-theme="terminal"] .titlebar-name { color: #22aa44; letter-spacing: 0.12em; }
 
-/* Dropdown option text always uses full --text for max contrast */
-.theme-opt-name { color: var(--text) !important; }
-.theme-opt-check { color: var(--accent) !important; }
+/* Dropdown option text — hardcoded in base styles */
 
 </style>
 </head>
