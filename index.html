@@ -1186,6 +1186,151 @@ return{qrcode:qrcode,QRErrorCorrectionLevel:QRErrorCorrectionLevel};
 // ─────────────────────────────────────────────
 // We load jsQR from CDN for QR decoding
 </script>
+<script>
+// ─────────────────────────────────────────────
+// ROBUST QR DECODER v3 — clean & fast (before blurring)
+// ─────────────────────────────────────────────
+function robustDecodeQR(imageData, width, height) {
+  function tryDecode(data, w, h) {
+    return typeof jsQR !== 'undefined' ? jsQR(data, w, h, { inversionAttempts: 'attemptBoth' }) : null;
+  }
+
+  function imageDataToCanvas(imgData, w, h) {
+    const c = document.createElement('canvas');
+    c.width = w; c.height = h;
+    c.getContext('2d').putImageData(imgData, 0, 0);
+    return c;
+  }
+
+  // 1. Original
+  let result = tryDecode(imageData.data, width, height);
+  if (result?.data) return result;
+
+  // 2. Preprocess (grayscale + contrast stretch)
+  let preData = preprocessForQR(imageData.data, width, height);
+  result = tryDecode(preData, width, height);
+  if (result?.data) return result;
+
+  // 3. Multi-threshold binary + inversion
+  const thresholds = [70, 100, 130, 160];
+  for (let thresh of thresholds) {
+    let binData = binaryThreshold(preData, width, height, thresh);
+    result = tryDecode(binData, width, height);
+    if (result?.data) return result;
+
+    let inverted = invertImageData(binData, width, height);
+    result = tryDecode(inverted, width, height);
+    if (result?.data) return result;
+  }
+
+  // 4. Otsu-style auto threshold
+  let otsuData = binaryThresholdOtsu(preData, width, height);
+  result = tryDecode(otsuData, width, height);
+  if (result?.data) return result;
+
+  // 5. Multi-scale + sharpen (lighter than v4/v5)
+  const scales = [0.4, 0.6, 0.8, 1.0, 1.25, 1.5, 1.75];
+  const tempCanvas = document.createElement('canvas');
+  const tempCtx = tempCanvas.getContext('2d');
+
+  for (let scale of scales) {
+    tempCanvas.width = Math.floor(width * scale);
+    tempCanvas.height = Math.floor(height * scale);
+    tempCtx.drawImage(imageDataToCanvas(imageData, width, height), 0, 0, tempCanvas.width, tempCanvas.height);
+
+    const scaledData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+    let sharpened = sharpenImage(scaledData);
+
+    for (let thresh of thresholds) {
+      let binScaled = binaryThreshold(sharpened.data, sharpened.width, sharpened.height, thresh);
+      result = tryDecode(binScaled, sharpened.width, sharpened.height);
+      if (result?.data) return result;
+
+      let invScaled = invertImageData(binScaled, sharpened.width, sharpened.height);
+      result = tryDecode(invScaled, sharpened.width, sharpened.height);
+      if (result?.data) return result;
+    }
+  }
+
+  return null;
+}
+
+// ── Keep these exact helpers (they were already in your file)
+function preprocessForQR(srcData, w, h) {
+  const data = new Uint8ClampedArray(srcData);
+  let min = 255, max = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    const gray = Math.floor(0.299*data[i] + 0.587*data[i+1] + 0.114*data[i+2]);
+    data[i] = data[i+1] = data[i+2] = gray;
+    if (gray < min) min = gray;
+    if (gray > max) max = gray;
+  }
+  if (max > min) {
+    const range = max - min;
+    for (let i = 0; i < data.length; i += 4) {
+      let val = Math.floor(255 * (data[i] - min) / range);
+      data[i] = data[i+1] = data[i+2] = val;
+      data[i+3] = 255;
+    }
+  }
+  return data;
+}
+
+function binaryThreshold(data, w, h, threshold = 110) {
+  const out = new Uint8ClampedArray(data);
+  for (let i = 0; i < out.length; i += 4) {
+    const val = out[i] > threshold ? 255 : 0;
+    out[i] = out[i+1] = out[i+2] = val;
+    out[i+3] = 255;
+  }
+  return out;
+}
+
+function binaryThresholdOtsu(data, w, h) {
+  const hist = new Array(256).fill(0);
+  for (let i = 0; i < data.length; i += 4) hist[data[i]]++;
+  let total = w * h;
+  let sum = 0, sumB = 0, wB = 0, wF = 0, max = 0, threshold = 0;
+  for (let i = 0; i < 256; i++) sum += i * hist[i];
+  for (let i = 0; i < 256; i++) {
+    wB += hist[i];
+    if (wB === 0) continue;
+    wF = total - wB;
+    sumB += i * hist[i];
+    const mB = sumB / wB;
+    const mF = (sum - sumB) / wF;
+    const between = wB * wF * (mB - mF) * (mB - mF);
+    if (between > max) { max = between; threshold = i; }
+  }
+  return binaryThreshold(data, w, h, threshold);
+}
+
+function invertImageData(data, w, h) {
+  const out = new Uint8ClampedArray(data);
+  for (let i = 0; i < out.length; i += 4) {
+    out[i] = out[i+1] = out[i+2] = 255 - out[i];
+  }
+  return out;
+}
+
+function sharpenImage(imageData) {
+  const data = imageData.data;
+  const w = imageData.width;
+  const h = imageData.height;
+  const out = new Uint8ClampedArray(data);
+  for (let y = 1; y < h-1; y++) {
+    for (let x = 1; x < w-1; x++) {
+      const idx = (y * w + x) * 4;
+      const sum = data[idx]*9
+        - data[(y-1)*w+(x-1)]*4 - data[(y-1)*w+x]*4 - data[(y-1)*w+(x+1)]*4
+        - data[y*w+(x-1)]*4 - data[y*w+(x+1)]*4
+        - data[(y+1)*w+(x-1)]*4 - data[(y+1)*w+x]*4 - data[(y+1)*w+(x+1)]*4;
+      out[idx] = out[idx+1] = out[idx+2] = Math.min(255, Math.max(0, sum/9));
+    }
+  }
+  return new ImageData(out, w, h);
+}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 <script>
 // ─────────────────────────────────────────────
@@ -2012,17 +2157,26 @@ function handleScanFile(file) {
   reader.onload = function(e) {
     var img = new Image();
     img.onload = function() {
+      let scale = 1;
+      if (img.width > 1200 || img.height > 1200) {
+        scale = 1200 / Math.max(img.width, img.height);
+      }
       var c = document.createElement('canvas');
-      c.width = img.width; c.height = img.height;
+      c.width = img.width * scale;
+      c.height = img.height * scale;
       var ctx = c.getContext('2d');
-      ctx.drawImage(img, 0, 0);
+      ctx.drawImage(img, 0, 0, c.width, c.height);
       var imageData = ctx.getImageData(0, 0, c.width, c.height);
-      var result = typeof jsQR !== 'undefined' ? jsQR(imageData.data, c.width, c.height) : null;
+
+      // ALWAYS show preview first
+      setScanSource('file');
+      document.getElementById('drop-preview').src = e.target.result;
+      document.getElementById('drop-preview').style.display = 'block';
+      document.getElementById('drop-inner').style.display = 'none';
+      document.getElementById('drop-change-btn').style.display = 'block';
+
+      var result = robustDecodeQR(imageData, c.width, c.height);
       if (result) {
-        document.getElementById('drop-preview').src = e.target.result;
-        document.getElementById('drop-preview').style.display = 'block';
-        document.getElementById('drop-inner').style.display = 'none';
-        document.getElementById('drop-change-btn').style.display = 'block';
         showScanResult(result.data);
       } else {
         showScanError('No QR code found in this image.');
@@ -2043,17 +2197,26 @@ async function pasteFromClipboard() {
           var bitmapUrl = URL.createObjectURL(blob);
           var img = new Image();
           img.onload = function() {
+            let scale = 1;
+            if (img.width > 1200 || img.height > 1200) {
+              scale = 1200 / Math.max(img.width, img.height);
+            }
             var c = document.createElement('canvas');
-            c.width = img.width; c.height = img.height;
-            var ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
+            c.width = img.width * scale;
+            c.height = img.height * scale;
+            var ctx = c.getContext('2d');
+            ctx.drawImage(img, 0, 0, c.width, c.height);
             var imageData = ctx.getImageData(0, 0, c.width, c.height);
-            var result = typeof jsQR !== 'undefined' ? jsQR(imageData.data, c.width, c.height) : null;
+
+            // ALWAYS show preview first
+            setScanSource('file');
+            document.getElementById('drop-preview').src = bitmapUrl;
+            document.getElementById('drop-preview').style.display = 'block';
+            document.getElementById('drop-inner').style.display = 'none';
+            document.getElementById('drop-change-btn').style.display = 'block';
+
+            var result = robustDecodeQR(imageData, c.width, c.height);
             if (result) {
-              setScanSource('file');
-              document.getElementById('drop-preview').src = bitmapUrl;
-              document.getElementById('drop-preview').style.display = 'block';
-              document.getElementById('drop-inner').style.display = 'none';
-              document.getElementById('drop-change-btn').style.display = 'block';
               showScanResult(result.data);
             } else {
               showScanError('No QR code found in clipboard image.');
@@ -2209,7 +2372,7 @@ function scanLoop() {
   camDecodeCanvas.height = video.videoHeight;
   camDecodeCtx.drawImage(video, 0, 0);
   var imageData = camDecodeCtx.getImageData(0, 0, camDecodeCanvas.width, camDecodeCanvas.height);
-  var result = typeof jsQR !== 'undefined' ? jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' }) : null;
+  var result = robustDecodeQR(imageData, imageData.width, imageData.height);
   if (result && result.data) {
     freezeOnDetect();
     showScanResult(result.data);
@@ -2597,7 +2760,28 @@ async function checkForUpdate() {
   }
 }
 
+document.addEventListener('paste', function(e) {
+  // Only active when Scan tab is open
+  if (!document.getElementById('tab-scan').classList.contains('active')) return;
+
+  // Only active when File source is selected (as you requested)
+  if (!document.getElementById('src-file-btn').classList.contains('active')) return;
+
+  // Look for an image in the clipboard
+  const items = Array.from(e.clipboardData?.items || []);
+  const imageItem = items.find(item => item.type.startsWith('image/'));
+
+  if (imageItem) {
+    e.preventDefault();                     // stop default browser paste
+    const file = imageItem.getAsFile();
+    if (file) {
+      handleScanFile(file);                 // this already shows the preview + scans
+    }
+  }
+});
+
 </script>
+
 
 <!-- ── Scan history action sheet ── -->
 <div class="hist-action-sheet-backdrop" id="hist-sheet-backdrop" onclick="closeHistSheet()"></div>
