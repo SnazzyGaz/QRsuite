@@ -2077,25 +2077,26 @@ function sendToGenerator(text) {
 
 function clearScan() {
   lastScanInfo = null;
-  document.getElementById('scan-result').classList.remove('visible');
-  document.getElementById('scan-result').style.display = 'none';
+  const resultEl = document.getElementById('scan-result');
+  resultEl.classList.remove('visible');
+  resultEl.style.display = 'none';
   document.getElementById('scan-error').style.display = 'none';
 
-  // Only reset file drop zone if we're actually in FILE mode
-  const isFileMode = document.getElementById('src-file-btn').classList.contains('active');
+  const isCameraActive = document.getElementById('src-camera-btn').classList.contains('active');
 
-  if (isFileMode) {
-    var dz = document.getElementById('drop-zone');
+  if (isCameraActive && camStream) {
+    // Force correct camera-only UI state (this fixes the stacking issue)
+    document.getElementById('drop-zone').style.display = 'none';
+    document.getElementById('cam-wrap').style.display = 'block';
+    resumeScanning();
+  } else {
+    // File mode cleanup
+    const dz = document.getElementById('drop-zone');
     dz.style.display = '';
     document.getElementById('drop-preview').style.display = 'none';
     document.getElementById('drop-inner').style.display = 'flex';
     document.getElementById('drop-change-btn').style.display = 'none';
     document.getElementById('scan-file').value = '';
-  }
-
-  // Resume camera (only if camera was active)
-  if (camStream && !isFileMode) {
-    resumeScanning();
   }
 }
 
@@ -2395,72 +2396,80 @@ function resumeScanning() {
 // ─────────────────────────────────────────────
 function showFocusRing(clientX, clientY) {
   const wrap = document.getElementById('cam-wrap');
-  const video = document.getElementById('cam-video');
-
-  // Remove any existing ring
   document.querySelectorAll('.cam-focus-ring').forEach(el => el.remove());
 
   const ring = document.createElement('div');
   ring.className = 'cam-focus-ring';
 
-  // Center the ring on the tap
   const rect = wrap.getBoundingClientRect();
   const x = clientX - rect.left;
   const y = clientY - rect.top;
 
-  ring.style.left = `${x - 41}px`;   // 82px / 2
+  ring.style.left = `${x - 41}px`;
   ring.style.top  = `${y - 41}px`;
 
   wrap.appendChild(ring);
-
-  // Auto-remove after animation
-  setTimeout(() => ring.remove(), 1500);
+  setTimeout(() => ring.remove(), 1200);
 }
 
 async function triggerRefocus(clientX, clientY) {
   if (!camStream) return;
-
   const track = camStream.getVideoTracks()[0];
   if (!track) return;
 
-  const rect = document.getElementById('cam-video').getBoundingClientRect();
-  const normX = (clientX - rect.left) / rect.width;
-  const normY = (clientY - rect.top) / rect.height;
+  const video = document.getElementById('cam-video');
+  const rect = video.getBoundingClientRect();
+  const normX = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+  const normY = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
 
-  // Try modern tap-to-focus first
   try {
     await track.applyConstraints({
-      advanced: [{
-        focusMode: 'manual',
-        focusPointOfInterest: { x: normX, y: normY }
-      }]
+      advanced: [{ focusMode: 'manual', focusPointOfInterest: { x: normX, y: normY } }]
     });
-    // Immediately switch back to continuous AF (most phones prefer this)
+    // Return to continuous autofocus after a short moment
     setTimeout(() => {
       track.applyConstraints({ focusMode: 'continuous' }).catch(() => {});
-    }, 200);
+    }, 250);
     return;
-  } catch(e) {}
+  } catch (e) {
+    console.log('Focus constraint not supported — using fallback');
+  }
 
-  // Fallback: force a quick restart (very effective on older devices)
+  // Fallback: quick camera restart (works on almost every device)
   try {
     const facing = camFacing;
     camStream.getTracks().forEach(t => t.stop());
     camStream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 1280 } }
     });
-    const video = document.getElementById('cam-video');
     video.srcObject = camStream;
     await video.play();
+    // Improved tap-to-focus (works reliably on iOS/Android)
+    const wrap = document.getElementById('cam-wrap');
+    const video = document.getElementById('cam-video');
+
+    // Remove any old listeners first
+    wrap.removeEventListener('click', tapToRefocus);
+    video.removeEventListener('click', tapToRefocus);
+    video.removeEventListener('touchend', tapToRefocus);
+
+    wrap.addEventListener('click', tapToRefocus, { passive: false });
+    video.addEventListener('click', tapToRefocus, { passive: false });
+    video.addEventListener('touchend', tapToRefocus, { passive: false });
     scanLoop();
-  } catch(e) {}
+  } catch (e) { console.log('Camera restart failed'); }
 }
 
 function tapToRefocus(e) {
   if (!camStream || camFrozen) return;
   e.preventDefault();
-  showFocusRing(e.clientX, e.clientY);
-  triggerRefocus(e.clientX, e.clientY);
+  e.stopPropagation();
+
+  const clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
+  const clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
+
+  showFocusRing(clientX, clientY);
+  triggerRefocus(clientX, clientY);
 }
 
 function freezeOnDetect() {
