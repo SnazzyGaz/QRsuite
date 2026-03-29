@@ -535,6 +535,25 @@ input[type=color] { width: 22px; height: 22px; border-radius: 5px; border: 1px s
 @keyframes updateSpin { to { transform: rotate(360deg); } }
 @keyframes updatePulse { 0%,100% { opacity:0.7; } 50% { opacity:1; } }
 
+/* ── Tap-to-focus visual ring ── */
+.cam-focus-ring {
+  position: absolute;
+  width: 82px;
+  height: 82px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 6px rgba(255,255,255,0.35);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 20;
+  animation: focusRingPop 1200ms ease-out forwards;
+}
+
+@keyframes focusRingPop {
+  0%   { opacity: 1; transform: scale(0.5); }
+  30%  { transform: scale(1.15); }
+  100% { opacity: 0; transform: scale(1); }
+}
 </style>
 </head>
 <body>
@@ -2322,6 +2341,8 @@ async function startCamera() {
     document.getElementById('cam-scanline').style.animationPlayState = 'running';
     status.textContent = 'Point at a QR code…';
     scanLoop();
+// ←←← ADD THIS LINE (enables tap-to-refocus)
+    document.getElementById('cam-wrap').addEventListener('click', tapToRefocus, { passive: false });
   } catch(e) {
     if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
       permBtn.style.display = 'flex';
@@ -2360,6 +2381,78 @@ function resumeScanning() {
   document.getElementById('scan-result').classList.remove('visible');
   document.getElementById('scan-result').style.display = 'none';
   scanLoop();
+}
+// ─────────────────────────────────────────────
+// TAP-TO-REFOCUS (new)
+// ─────────────────────────────────────────────
+function showFocusRing(clientX, clientY) {
+  const wrap = document.getElementById('cam-wrap');
+  const video = document.getElementById('cam-video');
+
+  // Remove any existing ring
+  document.querySelectorAll('.cam-focus-ring').forEach(el => el.remove());
+
+  const ring = document.createElement('div');
+  ring.className = 'cam-focus-ring';
+
+  // Center the ring on the tap
+  const rect = wrap.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+
+  ring.style.left = `${x - 41}px`;   // 82px / 2
+  ring.style.top  = `${y - 41}px`;
+
+  wrap.appendChild(ring);
+
+  // Auto-remove after animation
+  setTimeout(() => ring.remove(), 1500);
+}
+
+async function triggerRefocus(clientX, clientY) {
+  if (!camStream) return;
+
+  const track = camStream.getVideoTracks()[0];
+  if (!track) return;
+
+  const rect = document.getElementById('cam-video').getBoundingClientRect();
+  const normX = (clientX - rect.left) / rect.width;
+  const normY = (clientY - rect.top) / rect.height;
+
+  // Try modern tap-to-focus first
+  try {
+    await track.applyConstraints({
+      advanced: [{
+        focusMode: 'manual',
+        focusPointOfInterest: { x: normX, y: normY }
+      }]
+    });
+    // Immediately switch back to continuous AF (most phones prefer this)
+    setTimeout(() => {
+      track.applyConstraints({ focusMode: 'continuous' }).catch(() => {});
+    }, 200);
+    return;
+  } catch(e) {}
+
+  // Fallback: force a quick restart (very effective on older devices)
+  try {
+    const facing = camFacing;
+    camStream.getTracks().forEach(t => t.stop());
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 1280 } }
+    });
+    const video = document.getElementById('cam-video');
+    video.srcObject = camStream;
+    await video.play();
+    scanLoop();
+  } catch(e) {}
+}
+
+function tapToRefocus(e) {
+  if (!camStream || camFrozen) return;
+  e.preventDefault();
+  showFocusRing(e.clientX, e.clientY);
+  triggerRefocus(e.clientX, e.clientY);
 }
 
 function freezeOnDetect() {
