@@ -2080,15 +2080,23 @@ function clearScan() {
   document.getElementById('scan-result').classList.remove('visible');
   document.getElementById('scan-result').style.display = 'none';
   document.getElementById('scan-error').style.display = 'none';
-  // Reset file drop
-  var dz = document.getElementById('drop-zone');
-  dz.style.display = '';
-  document.getElementById('drop-preview').style.display = 'none';
-  document.getElementById('drop-inner').style.display = 'flex';
-  document.getElementById('drop-change-btn').style.display = 'none';
-  document.getElementById('scan-file').value = '';
-  // Re-enable camera if active
-  if (camStream) resumeScanning();
+
+  // Only reset file drop zone if we're actually in FILE mode
+  const isFileMode = document.getElementById('src-file-btn').classList.contains('active');
+
+  if (isFileMode) {
+    var dz = document.getElementById('drop-zone');
+    dz.style.display = '';
+    document.getElementById('drop-preview').style.display = 'none';
+    document.getElementById('drop-inner').style.display = 'flex';
+    document.getElementById('drop-change-btn').style.display = 'none';
+    document.getElementById('scan-file').value = '';
+  }
+
+  // Resume camera (only if camera was active)
+  if (camStream && !isFileMode) {
+    resumeScanning();
+  }
 }
 
 // ─────────────────────────────────────────────
