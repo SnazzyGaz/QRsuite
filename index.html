@@ -1347,6 +1347,7 @@ var camAnimFrame = null;
 var camFrozen = false;
 var camDecodeCanvas = document.createElement('canvas');
 var camDecodeCtx = camDecodeCanvas.getContext('2d');
+var lastCameraScan = 0;
 
 // ─────────────────────────────────────────────
 // Theme
@@ -2293,6 +2294,7 @@ async function startCamera() {
     video.srcObject = camStream;
     await video.play();
     camFrozen = false;
+    lastCameraScan = 0;
     document.getElementById('cam-snapshot').style.display = 'none';
     document.getElementById('cam-freeze-banner').style.display = 'none';
     document.getElementById('cam-rescan-btn').style.display = 'none';
@@ -2324,6 +2326,7 @@ function flipCamera() {
 
 function resumeScanning() {
   camFrozen = false;
+  lastCameraScan = 0;
   var video = document.getElementById('cam-video');
   var snapshot = document.getElementById('cam-snapshot');
   snapshot.style.display = 'none';
@@ -2363,22 +2366,40 @@ function freezeOnDetect() {
 
 function scanLoop() {
   if (camFrozen) return;
+
   var video = document.getElementById('cam-video');
   if (!video.videoWidth) {
     camAnimFrame = requestAnimationFrame(scanLoop);
     return;
   }
-  camDecodeCanvas.width = video.videoWidth;
-  camDecodeCanvas.height = video.videoHeight;
-  camDecodeCtx.drawImage(video, 0, 0);
+
+  const now = Date.now();
+  if (now - lastCameraScan < 220) {   // ~4–5 scans per second
+    camAnimFrame = requestAnimationFrame(scanLoop);
+    return;
+  }
+  lastCameraScan = now;
+
+  // Downscale for speed (keeps accuracy but prevents freezing)
+  const MAX_DECODE = 600;
+  let w = video.videoWidth;
+  let h = video.videoHeight;
+  const scale = Math.min(1, MAX_DECODE / Math.max(w, h));
+
+  camDecodeCanvas.width = Math.floor(w * scale);
+  camDecodeCanvas.height = Math.floor(h * scale);
+  camDecodeCtx.drawImage(video, 0, 0, camDecodeCanvas.width, camDecodeCanvas.height);
+
   var imageData = camDecodeCtx.getImageData(0, 0, camDecodeCanvas.width, camDecodeCanvas.height);
   var result = robustDecodeQR(imageData, imageData.width, imageData.height);
+
   if (result && result.data) {
     freezeOnDetect();
     showScanResult(result.data);
   } else {
     camAnimFrame = requestAnimationFrame(scanLoop);
   }
+}
 }
 
 // ─────────────────────────────────────────────
